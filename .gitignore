@@ -1,0 +1,60 @@
+# Ignoruj folder /thesis/output
+/thesis/output/
+
+# Ignoruj folder /python/data
+/python/data/
+
+# Ignoruj pliki tymczasowe LaTeX
+/thesis/*.aux
+/thesis/*.log
+/thesis/*.out
+/thesis/*.toc
+/thesis/*.bbl
+/thesis/*.blg
+/thesis/*.synctex.gz
+/thesis/*.fdb_latexmk
+/thesis/*.fls
+
+# Ignoruj pliki środowiska wirtualnego Pythona
+/python/venv/
+/python/.env
+/python/.venv/
+/python/env/
+/python/ENV/
+
+# Ignoruj pliki cache Pythona
+/python/__pycache__/
+/python/*.py[cod]
+/python/*$py.class
+
+# Ignoruj pliki IDE (np. PyCharm, VSCode)
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignoruj pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Ignoruj skompilowane pliki binarne
+*.exe
+*.bin
+*.so
+*.dll
+
+# Ignoruj pliki logów
+*.log
+*.tmp
+*.temp
+
+# Ignoruj pliki wynikowe i cache
+*.cache
+*.pyc
+*.pyd
+*.pyo
+*.egg
+*.egg-info/
+dist/
+build/
