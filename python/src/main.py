@@ -1,7 +1,7 @@
 from load_data import load_audio_and_annotations
 
 # Ścieżka do folderu z danymi
-data_dir = 'data/guitar-set'
+data_dir = '../data/guitar_set'
 
 # Wczytanie danych
 audio_files, jams_files, y, sr, jam = load_audio_and_annotations(data_dir)

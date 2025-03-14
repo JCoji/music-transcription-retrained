@@ -11,19 +11,19 @@ def load_audio_and_annotations(data_dir):
     :return: Lista plików audio, lista plików adnotacji, sygnał audio, częstotliwość próbkowania, obiekt JAMS.
     """
     # Wczytanie listy plików audio i adnotacji
-    audio_files = [f for f in os.listdir(os.path.join(data_dir, 'audio_mono-mic')) if f.endswith('.wav')]
-    jams_files = [f for f in os.listdir(os.path.join(data_dir, 'annotation')) if f.endswith('.jams')]
+    audio_files = [f for f in os.listdir(os.path.join(data_dir, 'audio_mono_mic')) if f.endswith('.wav')]
+    jams_files = [f for f in os.listdir(os.path.join(data_dir, 'annotations')) if f.endswith('.jams')]
 
     # Wczytanie pierwszego pliku audio i adnotacji
     audio_file = audio_files[0]
     jams_file = jams_files[0]
 
     # Wczytanie pliku audio
-    audio_path = os.path.join(data_dir, 'audio_mono-mic', audio_file)
+    audio_path = os.path.join(data_dir, 'audio_mono_mic', audio_file)
     y, sr = librosa.load(audio_path, sr=16000)  # Resampling do 16 kHz
 
     # Wczytanie adnotacji
-    jams_path = os.path.join(data_dir, 'annotation', jams_file)
+    jams_path = os.path.join(data_dir, 'annotations', jams_file)
     jam = jams.load(jams_path)
 
     return audio_files, jams_files, y, sr, jam
