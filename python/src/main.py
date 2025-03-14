@@ -1,4 +1,5 @@
 from load_data import load_audio_and_annotations
+from visualization import plot_waveform, plot_onsets
 
 # Ścieżka do folderu z danymi
 data_dir = '../data/guitar_set'
@@ -11,7 +12,18 @@ print(f"Wczytano plik audio: {audio_files[0]}")
 print(f"Częstotliwość próbkowania: {sr} Hz")
 print(f"Długość sygnału: {len(y) / sr:.2f} sekund")
 
-# Wyświetlenie informacji o adnotacjach
-print(f"\nAdnotacje dla pliku {jams_files[0]}:")
+# Wizualizacja sygnału audio
+plot_waveform(y, sr, title=f"Przebieg sygnału audio: {audio_files[0]}")
+
+# Wyodrębnienie onsetów i wysokości nut z adnotacji
+onsets = []
+pitches = []
+
 for annotation in jam.annotations:
-    print(f" - {annotation.namespace}: {len(annotation.data)} zdarzeń")
+    if annotation.namespace == 'note_midi':
+        for note in annotation.data:
+            onsets.append(note.time)
+            pitches.append(note.value)
+
+# Wizualizacja onsetów i wysokości nut
+plot_onsets(y, sr, onsets, pitches, title=f"Onsety i wysokości nut: {audio_files[0]}")
