@@ -1,3 +1,4 @@
+import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -53,4 +54,24 @@ def plot_onsets(y, sr, onsets, pitches=None, title="Onsety i wysokości nut"):
     plt.title(title)
     plt.legend()
     plt.grid()
+    plt.show()
+
+
+def plot_mel_spectrogram(y, sr, title="Mel-spektrogram"):
+    """
+    Generuje i wizualizuje Mel-spektrogram sygnału audio.
+
+    :param y: Sygnał audio.
+    :param sr: Częstotliwość próbkowania.
+    :param title: Tytuł wykresu.
+    """
+    # Generowanie Mel-spektrogramu
+    mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr)
+    mel_spectrogram_db = librosa.power_to_db(mel_spectrogram, ref=np.max)
+
+    # Wizualizacja Mel-spektrogramu
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mel_spectrogram_db, sr=sr, x_axis='time', y_axis='mel')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title(title)
     plt.show()

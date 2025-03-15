@@ -1,5 +1,5 @@
 from load_data import load_audio_and_annotations
-from visualization import plot_waveform, plot_onsets
+from visualization import plot_waveform, plot_onsets, plot_mel_spectrogram
 
 # Ścieżka do folderu z danymi
 data_dir = '../data/guitar_set'
@@ -27,3 +27,7 @@ for annotation in jam.annotations:
 
 # Wizualizacja onsetów i wysokości nut
 plot_onsets(y, sr, onsets, pitches, title=f"Onsety i wysokości nut: {audio_files[0]}")
+
+# Wizualizacja Mel-spektrogramu
+plot_mel_spectrogram(y, sr, title=f"Mel-spektrogram: {audio_files[0]}")
+
