@@ -1,11 +1,9 @@
-
 from load_data import setup_guitarset, load_audio_and_annotations
-from src.vizualization import create_spectrogram, visualize_example
+from model import train_model
+from vizualization import create_spectrogram, visualize_example
+import tensorflow as tf
 
-if __name__ == "__main__":
-    # 1. Inicjalizacja GuitarSet
-    guitarset = setup_guitarset()
-
+def main(guitarset):
     # 2. Wczytaj pierwsze nagranie (zmień track_id dla innych)
     track_id = guitarset.track_ids[0]
     audio, sr, onsets, pitches = load_audio_and_annotations(track_id, guitarset)
@@ -18,4 +16,12 @@ if __name__ == "__main__":
     print(f"Kształt spectrogramu: {spectrogram.shape} (mels x frames)")
 
     # 5. Wizualizacja
-    # visualize_example(audio, sr, spectrogram, onsets, pitches)
+    visualize_example(audio, sr, spectrogram, onsets, pitches)
+
+if __name__ == "__main__":
+    # 1. Inicjalizacja GuitarSet
+    guitarset = setup_guitarset()
+
+    #main(guitarset)
+
+    model = train_model()

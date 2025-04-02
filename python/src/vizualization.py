@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from config import Config
 
-
 def create_spectrogram(audio, sr):
     """Tworzy log-mel-spectrogram."""
     spectrogram = librosa.feature.melspectrogram(y=audio, sr=sr, n_mels=Config.N_MELS)
@@ -31,3 +30,4 @@ def visualize_example(audio, sr, spectrogram, onsets, pitches):
     plt.title("Log-mel-spectrogram")
     plt.tight_layout()
     plt.show()
+
