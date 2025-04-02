@@ -1,29 +1,30 @@
 import os
 import librosa
-import jams
+import mirdata
 
+from config import Config
 
-def load_audio_and_annotations(data_dir):
-    """
-    Wczytuje pliki audio i adnotacje z folderu GuitarSet.
+def setup_guitarset():
+    """Inicjalizuje GuitarSet i pobiera dane, jeśli brak."""
+    guitarset = mirdata.initialize("guitarset", data_home=Config.DATA_DIR)
+    print(f"Dostępne nagrania: {guitarset.track_ids[:3]}...")
 
-    :param data_dir: Ścieżka do folderu z danymi.
-    :return: Lista plików audio, lista plików adnotacji, sygnał audio, częstotliwość próbkowania, obiekt JAMS.
-    """
-    # Wczytanie listy plików audio i adnotacji
-    audio_files = [f for f in os.listdir(os.path.join(data_dir, 'audio_mono_mic')) if f.endswith('.wav')]
-    jams_files = [f for f in os.listdir(os.path.join(data_dir, 'annotations')) if f.endswith('.jams')]
+    # Sprawdź czy którykolwiek plik już istnieje
+    example_track = guitarset.track(guitarset.track_ids[0])
+    if not os.path.exists(example_track.audio_mic_path):
+        print("Pobieranie GuitarSet (~8 GB)...")
+        guitarset.download()
+    else:
+        print("Dane GuitarSet już istnieją - pomijam pobieranie")
+    return guitarset
 
-    # Wczytanie pierwszego pliku audio i adnotacji
-    audio_file = audio_files[0]
-    jams_file = jams_files[0]
+def load_audio_and_annotations(track_id, guitarset):
+    """Ładuje audio (mono-mic) i adnotacje (onsety, częstotliwości)."""
+    track = guitarset.track(track_id)
+    audio, sr = librosa.load(track.audio_mic_path, sr=Config.SAMPLE_RATE)
 
-    # Wczytanie pliku audio
-    audio_path = os.path.join(data_dir, 'audio_mono_mic', audio_file)
-    y, sr = librosa.load(audio_path, sr=16000)  # Resampling do 16 kHz
+    notes = track.notes_all
+    onsets = notes.intervals[:, 0]
+    pitches = notes.pitches
 
-    # Wczytanie adnotacji
-    jams_path = os.path.join(data_dir, 'annotations', jams_file)
-    jam = jams.load(jams_path)
-
-    return audio_files, jams_files, y, sr, jam
+    return audio, sr, onsets, pitches

@@ -1,29 +1,21 @@
-from load_data import load_audio_and_annotations
-from visualization import plot_waveform, plot_onsets
 
-# Ścieżka do folderu z danymi
-data_dir = '../data/guitar_set'
+from load_data import setup_guitarset, load_audio_and_annotations
+from src.vizualization import create_spectrogram, visualize_example
 
-# Wczytanie danych
-audio_files, jams_files, y, sr, jam = load_audio_and_annotations(data_dir)
+if __name__ == "__main__":
+    # 1. Inicjalizacja GuitarSet
+    guitarset = setup_guitarset()
 
-# Wyświetlenie podstawowych informacji
-print(f"Wczytano plik audio: {audio_files[0]}")
-print(f"Częstotliwość próbkowania: {sr} Hz")
-print(f"Długość sygnału: {len(y) / sr:.2f} sekund")
+    # 2. Wczytaj pierwsze nagranie (zmień track_id dla innych)
+    track_id = guitarset.track_ids[0]
+    audio, sr, onsets, pitches = load_audio_and_annotations(track_id, guitarset)
+    print(f"Nagranie: {track_id}, długość: {len(audio) / sr:.2f}s, liczba onsetów: {len(onsets)}")
 
-# Wizualizacja sygnału audio
-plot_waveform(y, sr, title=f"Przebieg sygnału audio: {audio_files[0]}")
+    # 3. Przetwarzanie
+    spectrogram = create_spectrogram(audio, sr)
 
-# Wyodrębnienie onsetów i wysokości nut z adnotacji
-onsets = []
-pitches = []
+    # 4. Weryfikacja
+    print(f"Kształt spectrogramu: {spectrogram.shape} (mels x frames)")
 
-for annotation in jam.annotations:
-    if annotation.namespace == 'note_midi':
-        for note in annotation.data:
-            onsets.append(note.time)
-            pitches.append(note.value)
-
-# Wizualizacja onsetów i wysokości nut
-plot_onsets(y, sr, onsets, pitches, title=f"Onsety i wysokości nut: {audio_files[0]}")
+    # 5. Wizualizacja
+    # visualize_example(audio, sr, spectrogram, onsets, pitches)
