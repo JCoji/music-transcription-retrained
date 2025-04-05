@@ -1,33 +1,27 @@
-from load_data import load_audio_and_annotations
-from visualization import plot_waveform, plot_onsets, plot_mel_spectrogram
+from load_data import setup_guitarset, load_audio_and_annotations
+from model import train_model
+from vizualization import create_spectrogram, visualize_example
+import tensorflow as tf
 
-# Ścieżka do folderu z danymi
-data_dir = '../data/guitar_set'
+def main(guitarset):
+    # 2. Wczytaj pierwsze nagranie (zmień track_id dla innych)
+    track_id = guitarset.track_ids[0]
+    audio, sr, onsets, pitches = load_audio_and_annotations(track_id, guitarset)
+    print(f"Nagranie: {track_id}, długość: {len(audio) / sr:.2f}s, liczba onsetów: {len(onsets)}")
 
-# Wczytanie danych
-audio_files, jams_files, y, sr, jam = load_audio_and_annotations(data_dir)
+    # 3. Przetwarzanie
+    spectrogram = create_spectrogram(audio, sr)
 
-# Wyświetlenie podstawowych informacji
-print(f"Wczytano plik audio: {audio_files[0]}")
-print(f"Częstotliwość próbkowania: {sr} Hz")
-print(f"Długość sygnału: {len(y) / sr:.2f} sekund")
+    # 4. Weryfikacja
+    print(f"Kształt spectrogramu: {spectrogram.shape} (mels x frames)")
 
-# Wizualizacja sygnału audio
-plot_waveform(y, sr, title=f"Przebieg sygnału audio: {audio_files[0]}")
+    # 5. Wizualizacja
+    visualize_example(audio, sr, spectrogram, onsets, pitches)
 
-# Wyodrębnienie onsetów i wysokości nut z adnotacji
-onsets = []
-pitches = []
+if __name__ == "__main__":
+    # 1. Inicjalizacja GuitarSet
+    guitarset = setup_guitarset()
 
-for annotation in jam.annotations:
-    if annotation.namespace == 'note_midi':
-        for note in annotation.data:
-            onsets.append(note.time)
-            pitches.append(note.value)
+    #main(guitarset)
 
-# Wizualizacja onsetów i wysokości nut
-plot_onsets(y, sr, onsets, pitches, title=f"Onsety i wysokości nut: {audio_files[0]}")
-
-# Wizualizacja Mel-spektrogramu
-plot_mel_spectrogram(y, sr, title=f"Mel-spektrogram: {audio_files[0]}")
-
+    model = train_model()
