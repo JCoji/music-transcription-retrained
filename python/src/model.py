@@ -4,6 +4,7 @@ import numpy as np
 from keras.src.layers import LSTM, BatchNormalization, Dropout, Dense
 from keras.src.models import Sequential
 from load_data import load_audio_and_annotations
+from config import Config
 from vizualization import create_spectrogram
 
 
@@ -46,7 +47,7 @@ def create_lstm_model(input_shape):
 
 
 def train_model():
-    guitarset = mirdata.initialize("guitarset")
+    guitarset = mirdata.initialize("guitarset", data_home=Config.DATA_DIR)
     track_ids = guitarset.track_ids[:10]  # Tylko 10 nagrań
 
     all_spectrograms = []

@@ -4,18 +4,26 @@ import mirdata
 
 from config import Config
 
+
 def setup_guitarset():
     """Inicjalizuje GuitarSet i pobiera dane, jeśli brak."""
+    # 1. Inicjalizacja datasetu (nawet jeśli indeksu jeszcze nie ma)
     guitarset = mirdata.initialize("guitarset", data_home=Config.DATA_DIR)
-    print(f"Dostępne nagrania: {guitarset.track_ids[:3]}...")
 
-    # Sprawdź czy którykolwiek plik już istnieje
+    # 2. Sprawdź, czy indeks istnieje (jeśli nie, pobierz go)
+    index_path = os.path.join(Config.DATA_DIR, "mirdata-datasets", "guitarset", "index.json")
+    if not os.path.exists(index_path):
+        print("Pobieranie indeksu GuitarSet...")
+        guitarset.download(partial_download=["index"])  # Pobierz tylko indeks
+
+    # 3. Teraz sprawdź pełne dane audio
     example_track = guitarset.track(guitarset.track_ids[0])
     if not os.path.exists(example_track.audio_mic_path):
-        print("Pobieranie GuitarSet (~8 GB)...")
-        guitarset.download()
+        print("Pobieranie pełnych danych GuitarSet (~8 GB)...")
+        guitarset.download()  # Pobierz wszystko
     else:
         print("Dane GuitarSet już istnieją - pomijam pobieranie")
+
     return guitarset
 
 def load_audio_and_annotations(track_id, guitarset):
