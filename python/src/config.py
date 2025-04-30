@@ -1,0 +1,31 @@
+import numpy as np
+
+# Audio config
+AUDIO_SAMPLE_RATE = 22050
+N_CHANNELS = 1
+FFT_HOP = 256
+N_FFT = 8 * FFT_HOP
+
+# Annotation config
+ANNOTATIONS_FPS = AUDIO_SAMPLE_RATE // FFT_HOP
+ANNOTATION_HOP = 1.0 / ANNOTATIONS_FPS
+
+# Guitar range
+GUITAR_BASE_FREQUENCY = 82.41  # E2
+GUITAR_N_SEMITONES = 49  # E2 (MIDI 40) to D6 (MIDI 89)
+
+# Binning
+NOTES_BINS_PER_SEMITONE = 1
+CONTOURS_BINS_PER_SEMITONE = 3
+
+
+def _freq_bins(bins_per_semitone, base_frequency, n_semitones):
+    d = 2.0 ** (1.0 / (12 * bins_per_semitone))
+    return base_frequency * d ** np.arange(bins_per_semitone * n_semitones)
+
+
+FREQ_BINS_NOTES = _freq_bins(NOTES_BINS_PER_SEMITONE, GUITAR_BASE_FREQUENCY, GUITAR_N_SEMITONES)
+FREQ_BINS_CONTOURS = _freq_bins(CONTOURS_BINS_PER_SEMITONE, GUITAR_BASE_FREQUENCY, GUITAR_N_SEMITONES)
+
+N_FREQ_BINS_NOTES = GUITAR_N_SEMITONES * NOTES_BINS_PER_SEMITONE
+N_FREQ_BINS_CONTOURS = GUITAR_N_SEMITONES * CONTOURS_BINS_PER_SEMITONE
