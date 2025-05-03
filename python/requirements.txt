@@ -7,3 +7,4 @@ tqdm==4.67.1
 pretty_midi>=0.2.10
 jams~=0.3.4
 ipython~=8.18.1
+nnAudio~=0.3.3

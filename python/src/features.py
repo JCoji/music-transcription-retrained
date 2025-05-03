@@ -1,14 +1,31 @@
 import librosa
 import numpy as np
 import torch
+from nnAudio.features import CQT1992v2
 
-from src.config import FFT_HOP, N_FREQ_BINS_NOTES, NOTES_BINS_PER_SEMITONE
+from src.config import (
+    FFT_HOP,
+    N_FREQ_BINS_NOTES,
+    NOTES_BINS_PER_SEMITONE,
+    AUDIO_SAMPLE_RATE, GUITAR_BASE_FREQUENCY,
+)
+
+cqt_transform = CQT1992v2(
+    sr=AUDIO_SAMPLE_RATE,
+    hop_length=FFT_HOP,
+    fmin=GUITAR_BASE_FREQUENCY,
+    n_bins=N_FREQ_BINS_NOTES,
+    bins_per_octave=12 * NOTES_BINS_PER_SEMITONE,
+    verbose=False,
+    output_format="Magnitude",
+).to("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def compute_cqt(audio: np.ndarray, sr: int, hop_length: int = FFT_HOP,
-                n_bins: int = N_FREQ_BINS_NOTES,
-                bins_per_octave: int = 12 * NOTES_BINS_PER_SEMITONE):
-    cqt = librosa.cqt(audio, sr=sr, hop_length=hop_length,
-                      n_bins=n_bins, bins_per_octave=bins_per_octave)
-    cqt_db = librosa.amplitude_to_db(np.abs(cqt), ref=np.max)
-    return torch.tensor(cqt_db, dtype=torch.float32)
+def compute_cqt(audio: np.ndarray) -> torch.Tensor:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    audio_tensor = torch.tensor(audio, dtype=torch.float32, device=device).unsqueeze(0)
+    cqt = cqt_transform(audio_tensor)
+    cqt_numpy = cqt.squeeze(0).cpu().numpy()
+    cqt_db_numpy = librosa.amplitude_to_db(cqt_numpy, ref=np.max)
+    cqt_db = torch.tensor(cqt_db_numpy, dtype=torch.float32, device=device)
+    return cqt_db

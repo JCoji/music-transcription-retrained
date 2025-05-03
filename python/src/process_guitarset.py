@@ -15,26 +15,28 @@ from .config import (
     AUDIO_SAMPLE_RATE,
     ANNOTATION_HOP,
     N_FREQ_BINS_NOTES,
-    N_FREQ_BINS_CONTOURS, FFT_HOP
+    N_FREQ_BINS_CONTOURS
 )
 
 
 def load_and_process_track(track, resample_rate: int = AUDIO_SAMPLE_RATE, apply_augmentation: bool = False) -> Dict:
     audio, sr = librosa.load(track.audio_mic_path, sr=resample_rate, mono=True)
 
+    # Augmentacja dźwięku jeśli wymagana
     if apply_augmentation:
         audio = torch.tensor(audio, dtype=torch.float32)
         audio = augment_audio(audio, sr)
         audio = audio.numpy()
 
-    # CQT/mel features
-    features = compute_cqt(audio, sr, hop_length=FFT_HOP)
+    # Obliczenie cech CQT
+    features = compute_cqt(audio)
 
-    # Reszta bez zmian
+    # Obliczenie czasu trwania i siatki czasowej
     duration = librosa.get_duration(y=audio, sr=sr)
     time_grid = np.arange(0, duration + ANNOTATION_HOP, ANNOTATION_HOP)
     n_time_frames = len(time_grid)
 
+    # Konwersja nut i konturów do formatu sparse
     note_indices, note_values = track.notes_all.to_sparse_index(
         time_grid, "s", FREQ_BINS_NOTES, "hz"
     )
@@ -74,67 +76,49 @@ def split_dataset(track_ids: List[str], train_ratio: float = 0.8, val_ratio: flo
     }
 
 
-def save_batch(data_list: List[Dict], destination_dir: Path, batch_name: str) -> None:
+def save_track(data: Dict, destination_dir: Path, track_id: str) -> None:
     destination_dir.mkdir(parents=True, exist_ok=True)
-    filename = destination_dir / f"batch_{batch_name}.pt"
-    torch.save(data_list, filename)
+    filename = destination_dir / f"{track_id}.pt"
+    torch.save(data, filename, _use_new_zipfile_serialization=False)
 
 
 def process_split(guitarset, split_name: str, track_ids: List[str], output_dir: Path,
-                  apply_augmentation: bool, batch_size: int = 32) -> None:
+                  apply_augmentation: bool) -> None:
     split_dir = output_dir / split_name
     split_dir.mkdir(parents=True, exist_ok=True)
-
-    current_batch = []
-    batch_num = 0
 
     for track_id in tqdm(track_ids, desc=f"Processing {split_name}"):
         track = guitarset.track(track_id)
         data = load_and_process_track(track, apply_augmentation=apply_augmentation)
-        current_batch.append(data)
-
-        if len(current_batch) >= batch_size:
-            save_batch(current_batch, split_dir, f"{batch_num}")
-            batch_num += 1
-            current_batch = []
-
-    if current_batch:
-        save_batch(current_batch, split_dir, f"{batch_num}_final")
+        save_track(data, split_dir, track_id)
 
 
 def process_dataset(data_dir="guitarset_data", output_dir="processed_data",
-                    batch_size=32, seed=42, apply_augmentation=False,
+                    seed=42, apply_augmentation=False,
                     max_tracks=None, overwrite=False):
-    """Main function for notebook usage
-
-    Args:
-        data_dir: Directory with GuitarSet data
-        output_dir: Output directory for processed data
-        batch_size: Size of processing batches
-        seed: Random seed for reproducibility
-        apply_augmentation: Whether to apply audio augmentation
-        max_tracks: Maximum number of tracks to process (None for all)
-        overwrite: Whether to overwrite existing output directory
-    """
     output_dir = Path(output_dir)
     if output_dir.exists() and not overwrite:
-        print(f"Output directory '{output_dir}' already exists. Skipping processing.")
+        print(f"Katalog wyjściowy '{output_dir}' już istnieje. Pomijam przetwarzanie.")
         return
     elif output_dir.exists() and overwrite:
-        print(f"Overwriting existing output directory '{output_dir}'.")
+        print(f"Nadpisuję istniejący katalog wyjściowy '{output_dir}'.")
 
+    # Inicjalizacja datasetu GuitarSet
     guitarset = mirdata.initialize("guitarset", data_home=data_dir)
     if not guitarset.validate():
         guitarset.download()
 
     all_track_ids = guitarset.track_ids
 
+    # Ograniczenie liczby utworów jeśli wymagane
     if max_tracks is not None and max_tracks > 0:
         random.seed(seed)
         all_track_ids = random.sample(all_track_ids, min(max_tracks, len(all_track_ids)))
 
+    # Podział datasetu
     splits = split_dataset(all_track_ids, seed=seed)
 
+    # Przetwarzanie każdego podziału
     for split_name, track_ids in splits.items():
         process_split(
             guitarset,
@@ -142,30 +126,4 @@ def process_dataset(data_dir="guitarset_data", output_dir="processed_data",
             track_ids,
             output_dir,
             apply_augmentation=apply_augmentation,
-            batch_size=batch_size
         )
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", default="guitarset_data")
-    parser.add_argument("--output-dir", default="processed_data")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--apply-augmentation", action="store_true")
-    parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--max-tracks", type=int, default=None,
-                        help="Maximum number of tracks to process (None for all)")
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing output directory")
-    args = parser.parse_args()
-
-    process_dataset(
-        data_dir=args.data_dir,
-        output_dir=args.output_dir,
-        batch_size=args.batch_size,
-        seed=args.seed,
-        apply_augmentation=args.apply_augmentation,
-        max_tracks=args.max_tracks,
-        overwrite=args.overwrite
-    )
