@@ -28,4 +28,4 @@ def compute_cqt(audio: np.ndarray) -> torch.Tensor:
     cqt_numpy = cqt.squeeze(0).cpu().numpy()
     cqt_db_numpy = librosa.amplitude_to_db(cqt_numpy, ref=np.max)
     cqt_db = torch.tensor(cqt_db_numpy, dtype=torch.float32, device=device)
-    return cqt_db
+    return cqt_db.T

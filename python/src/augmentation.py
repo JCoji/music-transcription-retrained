@@ -4,7 +4,6 @@ import torchaudio
 
 
 def augment_audio(waveform: torch.Tensor, sample_rate: int) -> torch.Tensor:
-    """Apply random augmentations to an audio tensor."""
     if random.random() < 0.5:
         waveform = add_noise(waveform)
     if random.random() < 0.5:

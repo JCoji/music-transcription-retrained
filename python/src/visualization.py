@@ -15,12 +15,18 @@ def plot_audio_waveform(audio, sr):
     plt.show()
 
 
-def plot_cqt(cqt, sr, hop_length, bins_per_octave):
+def plot_cqt(cqt, sr, hop_length, freq_bins):
     plt.figure(figsize=(14, 6))
-    librosa.display.specshow(cqt, sr=sr, hop_length=hop_length,
-                             x_axis='time', y_axis='cqt_hz',
-                             bins_per_octave=bins_per_octave)
+    librosa.display.specshow(
+        cqt.T,  # teraz cqt.shape = (T, F) → .T = (F, T) → specshow oczekuje (Y, X)
+        sr=sr,
+        hop_length=hop_length,
+        x_axis='time',
+        y_axis='log',
+        y_coords=freq_bins  # Oś Y = freq_bins (ma mieć długość F)
+    )
     plt.title("CQT - Constant-Q Transform")
+    plt.ylabel("Frequency [Hz]")
     plt.colorbar(label='Amplituda [dB]')
     plt.tight_layout()
     plt.show()
