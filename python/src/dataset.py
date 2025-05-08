@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, List
+
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
-
 
 class GuitarSetDataset(Dataset):
     def __init__(self, root_dir: Union[str, Path], file_extension: str = "*.pt"):
@@ -15,40 +16,72 @@ class GuitarSetDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         file_path = self.file_paths[idx]
-        return torch.load(file_path, weights_only=False)
+        return torch.load(file_path, map_location='cpu', weights_only=False)
 
+def collate_fn(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def shift_indices(indices, batch_idx, time_offset):
+        if isinstance(indices, np.ndarray):
+            indices = torch.from_numpy(indices)
+        shifted = torch.stack([
+            indices[:, 0] + time_offset,
+            indices[:, 1]
+        ], dim=1)
+        batch_column = torch.full((indices.shape[0], 1), batch_idx, dtype=torch.long)
+        return torch.cat([batch_column, shifted], dim=1)  # shape [N, 3]
 
-def collate_fn(batch):
-    # Wyodrębnienie pól
-    audios = [item["audio"] for item in batch]
-    features = [item["features"] for item in batch]
-    notes_maps = [create_sparse_map(item["note_indices"], item["note_values"], item["shape_notes"]) for item in batch]
-    contours_maps = [create_sparse_map(item["contour_indices"], item["contour_values"], item["shape_contours"]) for item
-                     in batch]
+    features_list = [item["features"] for item in batch]
+    audio_list = [item["audio"] for item in batch]
+    feature_lengths = [feat.shape[0] for feat in features_list]
+    max_len = max(feature_lengths)
+    B = len(batch)
+    F_notes = batch[0]["shape_notes"][1]
+    F_contours = batch[0]["shape_contours"][1]
 
-    # Padding po wymiarze czasowym
-    features_padded = pad_sequence(features, batch_first=True)  # (B, T, F)
-    notes_padded = pad_sequence(notes_maps, batch_first=True)
-    contours_padded = pad_sequence(contours_maps, batch_first=True)
+    padded_features = pad_sequence(features_list, batch_first=True)       # [B, T, F]
+    padded_audio = pad_sequence(audio_list, batch_first=True)             # [B, T_audio]
 
-    # Maski (1 tam, gdzie prawdziwe dane)
-    lengths = torch.tensor([f.shape[0] for f in features], dtype=torch.long)
-    mask = torch.arange(features_padded.shape[1])[None, :] < lengths[:, None]  # (B, T)
+    device = padded_features.device
+
+    # Create mask based on feature lengths [B, T]
+    mask = torch.zeros((B, max_len), dtype=torch.float32, device=device)
+    for i, length in enumerate(feature_lengths):
+        mask[i, :length] = 1.0
+
+    # Prepare dense targets (initialized with zeros)
+    note_dense = torch.zeros((B, max_len, F_notes), dtype=torch.float32, device=device)
+    onset_dense = torch.zeros((B, max_len, F_notes), dtype=torch.float32, device=device)
+    contour_dense = torch.zeros((B, max_len, F_contours), dtype=torch.float32, device=device)
+
+    for i, item in enumerate(batch):
+        note_indices = shift_indices(item["note_indices"], i, 0).to(device).T   # shape [3, N]
+        onset_indices = shift_indices(item["onset_indices"], i, 0).to(device).T
+        contour_indices = shift_indices(item["contour_indices"], i, 0).to(device).T
+
+        note_values = torch.tensor(item["note_values"], dtype=torch.float32, device=device)
+        onset_values = torch.tensor(item["onset_values"], dtype=torch.float32, device=device)
+        contour_values = torch.tensor(item["contour_values"], dtype=torch.float32, device=device)
+
+        # Sparse tensors → dense → accumulation
+        note_sparse = torch.sparse_coo_tensor(
+            note_indices, note_values, size=(B, max_len, F_notes), device=device
+        ).to_dense()
+        onset_sparse = torch.sparse_coo_tensor(
+            onset_indices, onset_values, size=(B, max_len, F_notes), device=device
+        ).to_dense()
+        contour_sparse = torch.sparse_coo_tensor(
+            contour_indices, contour_values, size=(B, max_len, F_contours), device=device
+        ).to_dense()
+
+        note_dense += note_sparse
+        onset_dense += onset_sparse
+        contour_dense += contour_sparse
 
     return {
-        "audio": audios,
-        "features": features_padded,
-        "notes": notes_padded,
-        "contours": contours_padded,
-        "mask": mask,
-        "lengths": lengths
+        "features": padded_features,              # [B, T, F]
+        "audio": padded_audio,                    # [B, T_audio]
+        "feature_lengths": torch.tensor(feature_lengths, device=device),  # [B]
+        "notes": note_dense,                      # [B, T, F_notes]
+        "onsets": onset_dense,                    # [B, T, F_notes]
+        "contours": contour_dense,                # [B, T, F_contours]
+        "mask": mask                              # [B, T]
     }
-
-
-def create_sparse_map(indices, values, shape):
-    dense = torch.zeros(shape, dtype=torch.float32)
-    if len(indices) > 0:
-        indices = torch.tensor(indices, dtype=torch.long)
-        values = torch.tensor(values, dtype=torch.float32)
-        dense[indices[:, 0], indices[:, 1]] = values
-    return dense

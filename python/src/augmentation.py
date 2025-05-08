@@ -1,21 +1,26 @@
 import torch
-import random
 import torchaudio
+import random
 
-
-def augment_audio(waveform: torch.Tensor, sample_rate: int) -> torch.Tensor:
+def augment_audio(audio: torch.Tensor, sample_rate: int) -> torch.Tensor:
     if random.random() < 0.5:
-        waveform = add_noise(waveform)
+        n_steps = random.randint(-3, 3)
+        pitch_shift = torchaudio.transforms.PitchShift(
+            sample_rate=sample_rate,
+            n_steps=n_steps
+        )
+        audio = pitch_shift(audio)
+
     if random.random() < 0.5:
-        waveform = pitch_shift(waveform, sample_rate)
-    return waveform
+        stretch_factor = random.uniform(0.9, 1.1)
+        effects = [
+            ["tempo", f"{stretch_factor}"]
+        ]
+        audio, _ = torchaudio.sox_effects.apply_effects_tensor(audio.unsqueeze(0), sample_rate, effects)
+        audio = audio.squeeze(0)
 
+    if random.random() < 0.3:
+        noise_amp = 0.005 * torch.rand(1)
+        audio = audio + noise_amp * torch.randn_like(audio)
 
-def add_noise(waveform: torch.Tensor, noise_level: float = 0.005) -> torch.Tensor:
-    noise = torch.randn_like(waveform) * noise_level
-    return waveform + noise
-
-
-def pitch_shift(waveform: torch.Tensor, sample_rate: int, n_steps_range=(-2, 2)) -> torch.Tensor:
-    n_steps = random.uniform(*n_steps_range)
-    return torchaudio.functional.pitch_shift(waveform, sample_rate, n_steps)
+    return audio

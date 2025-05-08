@@ -28,13 +28,9 @@ def load_and_process_track(track, resample_rate: int = AUDIO_SAMPLE_RATE, apply_
         audio = augment_audio(audio, sr)
         audio = audio.numpy()
 
-    # Obliczenie cech CQT
     features = compute_cqt(audio)
-
-    # Obliczenie czasu trwania i siatki czasowej
-    duration = librosa.get_duration(y=audio, sr=sr)
-    time_grid = np.arange(0, duration + ANNOTATION_HOP, ANNOTATION_HOP)
-    n_time_frames = len(time_grid)
+    n_time_frames = features.shape[0]
+    time_grid = np.arange(n_time_frames) * ANNOTATION_HOP
 
     # Konwersja nut i konturów do formatu sparse
     note_indices, note_values = track.notes_all.to_sparse_index(
@@ -105,7 +101,12 @@ def process_dataset(data_dir="guitarset_data", output_dir="processed_data",
 
     # Inicjalizacja datasetu GuitarSet
     guitarset = mirdata.initialize("guitarset", data_home=data_dir)
-    if not guitarset.validate():
+
+    if not Path(data_dir).exists():
+        print("Brak danych - rozpoczynam pobieranie...")
+        guitarset.download()
+    elif not list(Path(data_dir).glob("*")):
+        print("Katalog danych istnieje ale jest pusty - pobieram dane...")
         guitarset.download()
 
     all_track_ids = guitarset.track_ids
