@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import librosa
 import librosa.display
@@ -41,21 +42,18 @@ def plot_cqt(cqt, sr, hop_length, freq_bins):
     plt.tight_layout()
     plt.show()
 
-def plot_annotation_map(annotation_map, title, ylabel, cmap='hot'):
+def plot_annotation_map(annotation_map, title, ylabel, cmap='hot', sr=44100, hop_length=512):
+    T = annotation_map.shape[1]
+    times = librosa.frames_to_time(np.arange(T), sr=sr, hop_length=hop_length)
+
     plt.figure(figsize=(14, 4))
-    plt.imshow(annotation_map.T, aspect='auto', origin='lower',
-               cmap=cmap, interpolation='nearest')
+    plt.imshow(annotation_map, aspect='auto', origin='lower',
+               cmap=cmap, interpolation='nearest',
+               extent=[times[0], times[-1], 0, annotation_map.shape[0]])
+
     plt.title(title)
-    plt.xlabel("Ramy czasowe")
+    plt.xlabel("Czas [s]")
     plt.ylabel(ylabel)
     plt.colorbar()
     plt.tight_layout()
     plt.show()
-
-
-def create_annotation_maps(sample):
-    notes_map = torch.zeros(sample["shape_notes"])
-    contours_map = torch.zeros(sample["shape_contours"])
-    notes_map[sample["note_indices"][:, 0], sample["note_indices"][:, 1]] = 1
-    contours_map[sample["contour_indices"][:, 0], sample["contour_indices"][:, 1]] = 1
-    return notes_map, contours_map

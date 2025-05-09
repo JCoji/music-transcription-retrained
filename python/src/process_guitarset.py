@@ -26,7 +26,7 @@ def load_and_process_track(track, resample_rate: int = AUDIO_SAMPLE_RATE, apply_
     if apply_augmentation:
         audio = torch.tensor(audio, dtype=torch.float32)
         audio = augment_audio(audio, sr)
-        audio = audio.numpy()
+        audio = audio.detach().numpy()
 
     features = compute_cqt(audio)
     n_time_frames = features.shape[0]
@@ -94,19 +94,19 @@ def process_dataset(data_dir="guitarset_data", output_dir="processed_data",
                     max_tracks=None, overwrite=False):
     output_dir = Path(output_dir)
     if output_dir.exists() and not overwrite:
-        print(f"Katalog wyjściowy '{output_dir}' już istnieje. Pomijam przetwarzanie.")
+        print(f"Output directory '{output_dir}' already exists. Skipping processing.")
         return
     elif output_dir.exists() and overwrite:
-        print(f"Nadpisuję istniejący katalog wyjściowy '{output_dir}'.")
+        print(f"Overwriting existing output directory '{output_dir}'.")
 
     # Inicjalizacja datasetu GuitarSet
     guitarset = mirdata.initialize("guitarset", data_home=data_dir)
 
     if not Path(data_dir).exists():
-        print("Brak danych - rozpoczynam pobieranie...")
+        print("No data found - starting download...")
         guitarset.download()
     elif not list(Path(data_dir).glob("*")):
-        print("Katalog danych istnieje ale jest pusty - pobieram dane...")
+        print("Data directory exists but is empty - downloading data...")
         guitarset.download()
 
     all_track_ids = guitarset.track_ids
