@@ -1,83 +1,126 @@
+from typing import Dict  # Dodano import dla type hintingu
+
 import torch
 import torch.nn as nn
 
+from .config import N_FREQ_BINS_NOTES, N_FREQ_BINS_CONTOURS
+
+
 class MultiTaskTranscriptionModel(nn.Module):
-    def __init__(self, freq_bins_out_notes: int, freq_bins_out_contours: int,
-                 hidden_channels: int = 32):
+    """
+    Model wielozadaniowej transkrypcji muzycznej oparty na CNN i RNN (LSTM).
+
+    Przetwarza spektrogramy CQT w celu jednoczesnej predykcji nut,
+    ich początków (onsetów) oraz konturów melodycznych.
+    """
+
+    def __init__(
+        self,
+        input_features: int = N_FREQ_BINS_NOTES,
+        cnn_filters: list = [32, 64, 64],
+        cnn_kernels: list = [(3, 3), (3, 3), (3, 3)],
+        cnn_pools: list = [(1, 2), (1, 2), (1, 1)],
+        rnn_hidden_size: int = 512,
+        rnn_layers: int = 2,
+        dropout: float = 0.3,
+        output_notes_features: int = N_FREQ_BINS_NOTES,
+        output_contours_features: int = N_FREQ_BINS_CONTOURS,
+    ):
+        """
+        Inicjalizuje warstwy modelu.
+        Args:
+            input_features (int): Liczba cech wejściowych (np. koszy częstotliwości CQT).
+            cnn_filters (list): Liczba filtrów w kolejnych warstwach splotowych.
+            cnn_kernels (list): Rozmiary kerneli w warstwach splotowych.
+            cnn_pools (list): Rozmiary okien pooling w warstwach MaxPool2d.
+            rnn_hidden_size (int): Rozmiar warstwy ukrytej RNN.
+            rnn_layers (int): Liczba warstw RNN.
+            dropout (float): Współczynnik dropout.
+            output_notes_features (int): Liczba cech wyjściowych dla predykcji nut i onsetów.
+            output_contours_features (int): Liczba cech wyjściowych dla predykcji konturów.
+        """
         super().__init__()
 
-        #Wspólna baza
-        self.conv_shared = nn.Sequential(
-            nn.Conv2d(1, hidden_channels, kernel_size=(5, 5), padding=2),
-            nn.BatchNorm2d(hidden_channels),
-            nn.ReLU(),
+        self.input_features = input_features
+        # print(f"Inicjalizacja modelu. Wymiar wejściowy CQT (input_features): {self.input_features}") # Można odkomentować do debugowania
 
-            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=(5, 5), padding=2),
-            nn.BatchNorm2d(hidden_channels),
-            nn.ReLU(),
+        cnn_module_list = []
+        in_channels = 1  # Jednokanałowe wejście (spektrogram)
+
+        for i in range(len(cnn_filters)):
+            cnn_module_list.append(
+                nn.Conv2d(in_channels, cnn_filters[i], cnn_kernels[i], padding="same")
+            )
+            cnn_module_list.append(nn.BatchNorm2d(cnn_filters[i]))
+            cnn_module_list.append(nn.ReLU())
+            cnn_module_list.append(nn.MaxPool2d(cnn_pools[i]))
+            cnn_module_list.append(nn.Dropout(dropout))
+            in_channels = cnn_filters[i]
+
+        self.cnn = nn.Sequential(*cnn_module_list)
+
+        # Automatyczne obliczenie rozmiaru wejścia do RNN
+        with torch.no_grad():  # Nie potrzebujemy gradientów do tego obliczenia
+            # Użyj przykładowego tensora: (Batch, Kanały_wej, Czas, Częstotliwości_wej)
+            # Wymiar czasu (np. 10) jest dowolny, nie wpływa na liczbę cech dla RNN
+            dummy_input = torch.zeros(1, 1, 10, self.input_features)
+            cnn_output_shape = self.cnn(dummy_input).shape
+            # print(f"Kształt wyjścia z CNN (dla przykładowego T=10): {cnn_output_shape}") # Można odkomentować
+
+            # Rozmiar wejścia RNN = kanały_wyjściowe_CNN * kosze_częstotliwości_po_poolingu
+            rnn_input_size = cnn_output_shape[1] * cnn_output_shape[3]
+            # print(f"Obliczony rozmiar wejścia do RNN: {rnn_input_size}") # Można odkomentować
+
+        self.rnn = nn.LSTM(
+            rnn_input_size,
+            rnn_hidden_size,
+            rnn_layers,
+            batch_first=True,
+            bidirectional=True,
+            dropout=dropout if rnn_layers > 1 else 0,
         )
 
-        #Kontury
-        self.conv_contours = nn.Sequential(
-            nn.Conv2d(hidden_channels, 8, kernel_size=(3, 3 * 13), padding=(1, 19)),
-            nn.BatchNorm2d(8),
-            nn.ReLU(),
+        # Rozmiar wyjścia z dwukierunkowego RNN
+        rnn_output_size = rnn_hidden_size * 2
 
-            nn.Conv2d(8, 1, kernel_size=(5, 5), padding=2),
-            nn.Sigmoid()
-        )
+        self.fc_notes = nn.Linear(rnn_output_size, output_notes_features)
+        self.fc_onsets = nn.Linear(
+            rnn_output_size, output_notes_features
+        )  # Taki sam wymiar jak nuty
+        self.fc_contours = nn.Linear(rnn_output_size, output_contours_features)
 
-        #Nuty (notes)
-        self.conv_notes_reduce = nn.Sequential(
-            nn.Conv2d(1, hidden_channels, kernel_size=(7, 7), padding=3, stride=1),
-            nn.ReLU()
-        )
-        self.conv_notes_output = nn.Sequential(
-            nn.Conv2d(hidden_channels, 1, kernel_size=(7, 3), padding=(3, 1)),
-            nn.Sigmoid()
-        )
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+        """
+        Definiuje przejście danych przez model.
 
-        #Onsety
-        self.conv_onsets_reduce = nn.Sequential(
-            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=(5, 5), padding=2, stride=1),
-            nn.BatchNorm2d(hidden_channels),
-            nn.ReLU()
-        )
-        self.conv_onsets_output = nn.Sequential(
-            nn.Conv2d(hidden_channels + 1, 1, kernel_size=(3, 3), padding=1),
-            nn.Sigmoid()
-        )
+        Args:
+            x (torch.Tensor): Tensor wejściowy o kształcie (B, T, F_in),
+                              gdzie B to batch size, T to liczba ramek czasowych,
+                              a F_in to liczba cech wejściowych.
+        Returns:
+            Dict[str, torch.Tensor]: Słownik z logitami dla nut, onsetów i konturów.
+        """
+        # Wejście x: (B, T, F_in)
+        x = x.unsqueeze(1)  # Dodanie wymiaru kanału -> (B, 1, T, F_in)
 
-        self.freq_bins_out_notes = freq_bins_out_notes
-        self.freq_bins_out_contours = freq_bins_out_contours
+        x = self.cnn(x)  # Wyjście CNN: (B, C_out, T_out, F_out)
+        # T_out to liczba ramek po CNN (zależy od poolingu w czasie)
+        # F_out to liczba koszy częstotliwości po CNN (zależy od poolingu w częstotliwości)
 
-    def forward(self, features):  # features: [B, T, F]
-        B, T, F = features.shape
-        x = features.unsqueeze(1)  # [B, 1, T, F]
+        B, C_out, T_out, F_out = x.shape
+        # Zmiana kolejności wymiarów dla RNN: (B, T_out, C_out, F_out)
+        x = x.permute(0, 2, 1, 3)
+        # Spłaszczenie wymiarów C_out i F_out: (B, T_out, C_out * F_out)
+        x = x.reshape(B, T_out, C_out * F_out)
 
-        #Wspólna baza
-        x_shared = self.conv_shared(x)  # [B, C, T, F]
+        x, _ = self.rnn(x)  # Wyjście RNN: (B, T_out, rnn_hidden_size * 2)
 
-
-        contours_map = self.conv_contours(x_shared)  # [B, 1, T, F]
-        contours_out = contours_map.squeeze(1).permute(0, 2, 1)  # [B, F, T] → chcemy [B, T, F]
-        contours_out = contours_out.permute(0, 2, 1).contiguous()  # [B, T, F]
-
-        #Nuty
-        notes_feats = self.conv_notes_reduce(contours_map)  # [B, C, T, F//3]
-        notes_map = self.conv_notes_output(notes_feats)  # [B, 1, T, F//3]
-        notes_out = notes_map.squeeze(1)  # [B, T, F_notes]
-
-        #Onsety
-        onsets_feats = self.conv_onsets_reduce(x_shared)  # [B, C, T, F//3]
-
-        # Concatenacja z notes_map (tak jak Spotify)
-        concat_feats = torch.cat([notes_map, onsets_feats], dim=1)  # [B, C+1, T, F//3]
-        onsets_map = self.conv_onsets_output(concat_feats)  # [B, 1, T, F//3]
-        onsets_out = onsets_map.squeeze(1)  # [B, T, F_notes]
+        notes_logits = self.fc_notes(x)
+        onsets_logits = self.fc_onsets(x)
+        contours_logits = self.fc_contours(x)
 
         return {
-            "contours": contours_out[:, :, :self.freq_bins_out_contours],
-            "notes": notes_out[:, :, :self.freq_bins_out_notes],
-            "onsets": onsets_out[:, :, :self.freq_bins_out_notes]
+            "notes": notes_logits,
+            "onsets": onsets_logits,
+            "contours": contours_logits,
         }
