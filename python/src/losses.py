@@ -1,8 +1,12 @@
+# src/losses.py
+
 from typing import Dict
 
 import torch
 from torch import nn
 from tqdm import tqdm
+
+from .focal_loss import FocalLoss  # Import FocalLoss
 
 
 def calculate_pos_weights_for_dataset(
@@ -11,9 +15,10 @@ def calculate_pos_weights_for_dataset(
     num_freq_bins_notes: int,
     num_freq_bins_contours: int,
     epsilon: float = 1e-8,
-) -> dict:
+) -> Dict[str, torch.Tensor]:
     """
     Oblicza wagi 'pos_weight' dla funkcji straty BCEWithLogitsLoss na podstawie całego zbioru danych.
+    Może być również używane jako 'pos_weight' (interpretowane jako alpha dla klasy pozytywnej) dla Focal Loss.
 
     Wagi te pomagają w radzeniu sobie ze niezbalansowanymi klasami w zadaniach transkrypcji.
     Iteruje po dataloaderze, zliczając pozytywne i negatywne wystąpienia dla każdej klasy
@@ -29,7 +34,6 @@ def calculate_pos_weights_for_dataset(
     Returns:
         Słownik zawierający obliczone tensory 'pos_weight' dla zadań 'notes', 'onsets', 'contours'.
     """
-    # Inicjalizacja liczników
     counts_positive = {
         "notes": torch.zeros(num_freq_bins_notes, device=device),
         "onsets": torch.zeros(num_freq_bins_notes, device=device),
@@ -41,61 +45,47 @@ def calculate_pos_weights_for_dataset(
         "contours": torch.zeros(num_freq_bins_contours, device=device),
     }
 
-    print("Obliczanie wag pos_weight na podstawie zbioru danych...")
+    print("Obliczanie wag pos_weight/alpha na podstawie zbioru danych...")
     for batch in tqdm(dataloader, desc="Analiza batchy"):
         notes_target = batch["notes"].to(device)
         onsets_target = batch["onsets"].to(device)
         contours_target = batch["contours"].to(device)
         mask = batch["mask"].to(device)
 
-        # Rozszerzenie maski do wymiarów targetów (B, T, F)
-        mask_notes_expanded = mask.unsqueeze(-1).expand_as(notes_target)
-        mask_contours_expanded = mask.unsqueeze(-1).expand_as(contours_target)
+        mask_notes = mask.unsqueeze(-1).expand_as(notes_target)
+        mask_contours = mask.unsqueeze(-1).expand_as(contours_target)
 
-        # Zliczanie pozytywnych wystąpień i aktywnych ramek dla każdego kosza częstotliwości
-        counts_positive["notes"] += (notes_target * mask_notes_expanded).sum(dim=(0, 1))
-        total_active_frames_per_bin["notes"] += mask_notes_expanded.sum(dim=(0, 1))
+        counts_positive["notes"] += (notes_target * mask_notes).sum(dim=(0, 1))
+        total_active_frames_per_bin["notes"] += mask_notes.sum(dim=(0, 1))
 
-        counts_positive["onsets"] += (onsets_target * mask_notes_expanded).sum(
-            dim=(0, 1)
-        )
-        total_active_frames_per_bin["onsets"] += mask_notes_expanded.sum(dim=(0, 1))
+        counts_positive["onsets"] += (onsets_target * mask_notes).sum(dim=(0, 1))
+        total_active_frames_per_bin["onsets"] += mask_notes.sum(dim=(0, 1))
 
-        counts_positive["contours"] += (contours_target * mask_contours_expanded).sum(
-            dim=(0, 1)
-        )
-        total_active_frames_per_bin["contours"] += mask_contours_expanded.sum(
-            dim=(0, 1)
-        )
+        counts_positive["contours"] += (contours_target * mask_contours).sum(dim=(0, 1))
+        total_active_frames_per_bin["contours"] += mask_contours.sum(dim=(0, 1))
 
-    pos_weights_calculated = {}
-    for task in ["notes", "onsets", "contours"]:
-        # Obliczenie liczby negatywnych wystąpień
-        counts_negative_task = total_active_frames_per_bin[task] - counts_positive[task]
+    pos_weights_calculated: Dict[str, torch.Tensor] = {}
 
-        # Zabezpieczenie przed ujemnymi wartościami w counts_negative (co nie powinno się zdarzyć przy poprawnej masce i danych)
-        if torch.any(counts_negative_task < 0):
+    for task in ("notes", "onsets", "contours"):
+        positives = counts_positive[task]
+        total = total_active_frames_per_bin[task]
+        negatives = total - positives
+
+        if torch.any(negatives < 0):
             print(
-                f"OSTRZEŻENIE: Wykryto ujemne wartości w 'counts_negative' dla zadania {task}. Sprawdź maskę i dane."
+                f"OSTRZEŻENIE: Wykryto ujemne wartości w 'counts_negative' dla zadania "
+                f"{task}. Sprawdź maskę i dane."
             )
-            counts_negative_task = torch.clamp(counts_negative_task, min=0)
+            negatives = torch.clamp(negatives, min=0)
 
-        # Obliczenie wag pos_weight: stosunek negatywnych do pozytywnych
-        current_pos_weights = counts_negative_task / (counts_positive[task] + epsilon)
+        weights = negatives / (positives + epsilon)
+        weights = torch.clamp(weights, max=110.0)
+        weights[torch.isinf(weights) | torch.isnan(weights)] = 1.0
 
-        # Ograniczenie maksymalnej wagi dla stabilności numerycznej
-        current_pos_weights = torch.clamp(
-            current_pos_weights, max=170.0
-        )  # Wartość 170.0 jest przykładowa
-
-        # Obsługa NaN lub Inf (gdy counts_positive[task] + epsilon było bliskie zeru)
-        current_pos_weights[
-            torch.isinf(current_pos_weights) | torch.isnan(current_pos_weights)
-        ] = 1.0
-
-        pos_weights_calculated[task] = current_pos_weights
+        pos_weights_calculated[task] = weights
         print(
-            f"Wagi dla zadania '{task}': min={current_pos_weights.min():.2f}, max={current_pos_weights.max():.2f}, średnia={current_pos_weights.mean():.2f}"
+            f"Wagi dla zadania '{task}': "
+            f"min={weights.min():.2f}, max={weights.max():.2f}, średnia={weights.mean():.2f}"
         )
 
     return pos_weights_calculated
@@ -107,19 +97,24 @@ def calculate_loss(
     device: torch.device,
     pos_weights: Dict[str, torch.Tensor],
     task_weights: Dict[str, float],
+    loss_type: str = "BCE",
+    focal_loss_gamma: float = 2.0,
+    focal_loss_alpha: Dict[str, float] = None,
 ) -> Dict[str, torch.Tensor]:
     """
     Oblicza łączną ważoną stratę dla batcha.
 
-    Uwzględnia maskę, wagi klas (pos_weight dla BCEWithLogitsLoss)
-    oraz wagi poszczególnych zadań (notes, onsets, contours).
-
     Args:
         model_output: Słownik z logitami z modelu dla 'notes', 'onsets', 'contours'.
-        batch: Słownik z danymi wejściowymi, zawierający targety ('notes', 'onsets', 'contours') i 'mask'.
+        batch: Słownik z danymi wejściowymi, zawierający targety i 'mask'.
         device: Urządzenie (cpu/cuda).
-        pos_weights: Słownik z tensorami pos_weight dla każdego zadania.
-        task_weights: Słownik z wagami float dla każdego zadania, określający ich ważność w łącznej stracie.
+        pos_weights: Słownik z tensorami pos_weight. Dla BCE używane bezpośrednio.
+            Dla FocalLoss, jeśli `focal_loss_alpha` nie jest podane,
+            `pos_weights` jest przekazywane do `FocalLoss` jako argument `pos_weight`.
+        task_weights: Słownik z wagami float dla każdego zadania.
+        loss_type: Rodzaj funkcji straty ('BCE' lub 'Focal').
+        focal_loss_gamma: Parametr gamma dla Focal Loss.
+        focal_loss_alpha: Słownik z wartościami alpha dla Focal Loss dla każdego zadania.
 
     Returns:
         Słownik zawierający 'total_loss' oraz straty dla poszczególnych zadań.
@@ -127,51 +122,55 @@ def calculate_loss(
     notes_target = batch["notes"].to(device)
     onsets_target = batch["onsets"].to(device)
     contours_target = batch["contours"].to(device)
-    mask = batch["mask"].to(device)  # Maska o kształcie (B, T)
+    mask = batch["mask"].to(device)
 
     notes_logits = model_output["notes"]
     onsets_logits = model_output["onsets"]
     contours_logits = model_output["contours"]
 
-    # Inicjalizacja funkcji strat z wagami pos_weight
-    bce_notes = nn.BCEWithLogitsLoss(
-        reduction="none", pos_weight=pos_weights["notes"].to(device)
+    losses_unreduced: Dict[str, torch.Tensor] = {}
+
+    for task_key, logits, target in (
+        ("notes", notes_logits, notes_target),
+        ("onsets", onsets_logits, onsets_target),
+        ("contours", contours_logits, contours_target),
+    ):
+        current_pos_weight = pos_weights[task_key].to(device)
+        current_focal_alpha = focal_loss_alpha.get(task_key) if focal_loss_alpha else None
+
+        if loss_type.upper() == "FOCAL":
+            loss_fn = FocalLoss(
+                alpha=current_focal_alpha,
+                gamma=focal_loss_gamma,
+                reduction="none",
+                pos_weight=(current_pos_weight if current_focal_alpha is None else None),
+            )
+        elif loss_type.upper() == "BCE":
+            loss_fn = nn.BCEWithLogitsLoss(
+                reduction="none",
+                pos_weight=current_pos_weight,
+            )
+        else:
+            raise ValueError(f"Nieznany typ funkcji straty: {loss_type}")
+
+        losses_unreduced[task_key] = loss_fn(logits, target.float())
+
+    mask_notes = mask.unsqueeze(-1).expand_as(notes_target)
+    mask_contours = mask.unsqueeze(-1).expand_as(contours_target)
+
+    loss_notes = (
+        (losses_unreduced["notes"] * mask_notes).sum()
+        / (mask_notes.sum() + 1e-8)
     )
-    bce_onsets = nn.BCEWithLogitsLoss(
-        reduction="none", pos_weight=pos_weights["onsets"].to(device)
+    loss_onsets = (
+        (losses_unreduced["onsets"] * mask_notes).sum()
+        / (mask_notes.sum() + 1e-8)
     )
-    bce_contours = nn.BCEWithLogitsLoss(
-        reduction="none", pos_weight=pos_weights["contours"].to(device)
+    loss_contours = (
+        (losses_unreduced["contours"] * mask_contours).sum()
+        / (mask_contours.sum() + 1e-8)
     )
 
-    # Obliczenie strat (bez redukcji, aby zastosować maskę)
-    loss_notes_unreduced = bce_notes(notes_logits, notes_target.float())
-    loss_onsets_unreduced = bce_onsets(onsets_logits, onsets_target.float())
-    loss_contours_unreduced = bce_contours(contours_logits, contours_target.float())
-
-    # Przygotowanie masek o odpowiednich wymiarach (B, T, F)
-    mask_notes_expanded = mask.unsqueeze(-1).expand_as(notes_target)
-    mask_contours_expanded = mask.unsqueeze(-1).expand_as(contours_target)
-
-    # Zastosowanie maski do strat
-    loss_notes_masked = loss_notes_unreduced * mask_notes_expanded
-    loss_onsets_masked = (
-        loss_onsets_unreduced * mask_notes_expanded
-    )  # Onsety używają tej samej maski co nuty
-    loss_contours_masked = loss_contours_unreduced * mask_contours_expanded
-
-    # Obliczenie średniej straty tylko dla aktywnych (niezamaskowanych) elementów
-    eps = 1e-8  # Dla uniknięcia dzielenia przez zero, jeśli suma maski jest 0
-    num_active_notes = mask_notes_expanded.sum()
-    num_active_contours = mask_contours_expanded.sum()
-
-    loss_notes = loss_notes_masked.sum() / (num_active_notes + eps)
-    loss_onsets = loss_onsets_masked.sum() / (
-        num_active_notes + eps
-    )  # Onsety normalizowane przez tę samą liczbę co nuty
-    loss_contours = loss_contours_masked.sum() / (num_active_contours + eps)
-
-    # Łączna strata z uwzględnieniem wag zadań
     total_loss = (
         task_weights["notes"] * loss_notes
         + task_weights["onsets"] * loss_onsets

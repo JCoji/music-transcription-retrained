@@ -91,28 +91,23 @@ def load_and_process_track(
                         dla nut, onsetów i konturów, oraz kształty docelowe.
     """
     # Wczytanie i resampling sygnału audio (mikrofonowego) do mono
-    audio_mic, _ = librosa.load(track.audio_mic_path, sr=resample_rate, mono=True)
+    audio_mic, _ = librosa.load(
+        str(track.audio_mic_path), sr=resample_rate, mono=True
+    )  # str() dla Path
 
-    # Normalizacja audio do zakresu [-1, 1]
     max_abs_val = np.max(np.abs(audio_mic))
-    if max_abs_val > 1e-6:  # Unikanie dzielenia przez zero dla cichych sygnałów
+    if max_abs_val > 1e-6:
         audio_mic = audio_mic / max_abs_val
     else:
-        audio_mic = np.zeros_like(audio_mic)  # Jeśli sygnał jest praktycznie ciszą
+        audio_mic = np.zeros_like(audio_mic)
 
-    # Obliczenie spektrogramu CQT
     features_mic_tensor = compute_cqt(audio_mic)
-    if (
-        features_mic_tensor.ndim == 3
-    ):  # Usunięcie ewentualnego wymiaru batcha, jeśli CQT go dodało
+    if features_mic_tensor.ndim == 3:
         features_mic_tensor = features_mic_tensor.squeeze(0)
 
-    n_time_frames = features_mic_tensor.shape[0]  # Liczba ramek czasowych w CQT
-    # Siatka czasowa dla adnotacji, zsynchronizowana z ramkami CQT
+    n_time_frames = features_mic_tensor.shape[0]
     time_grid = np.arange(n_time_frames) * ANNOTATION_HOP
 
-    # Konwersja adnotacji mirdata (nuty, onSety, kontury) do formatu sparse
-    # (indeksy czas-częstotliwość i odpowiadające im wartości)
     note_indices, note_values = track.notes_all.to_sparse_index(
         time_grid, "s", FREQ_BINS_NOTES, "hz"
     )
@@ -134,27 +129,21 @@ def load_and_process_track(
         contour_indices, contour_values = _process_sparse_annotations(
             contour_indices_raw, contour_values_raw
         )
-    else:  # Jeśli brak adnotacji konturów, zwróć puste tablice
+    else:
         contour_indices = np.empty((0, 2), dtype=int)
         contour_values = np.empty((0,), dtype=float)
 
     return {
-        "features": features_mic_tensor.cpu().numpy(),  # Cechy CQT jako NumPy array
-        "feature_length": n_time_frames,  # Długość sekwencji cech
-        "note_indices": note_indices,  # Indeksy rzadkich nut
-        "note_values": note_values,  # Wartości rzadkich nut (zbinaryzowane)
-        "onset_indices": onset_indices,  # Indeksy rzadkich onsetów
-        "onset_values": onset_values,  # Wartości rzadkich onsetów (zbinaryzowane)
-        "contour_indices": contour_indices,  # Indeksy rzadkich konturów
-        "contour_values": contour_values,  # Wartości rzadkich konturów (zbinaryzowane)
-        "shape_notes": (
-            n_time_frames,
-            N_FREQ_BINS_NOTES,
-        ),  # Docelowy kształt dla gęstych nut/onsetów
-        "shape_contours": (
-            n_time_frames,
-            N_FREQ_BINS_CONTOURS,
-        ),  # Docelowy kształt dla gęstych konturów
+        "track_id": track.track_id,  # <<< DODANA LINIA
+        "features": features_mic_tensor.cpu().numpy(),
+        "note_indices": note_indices,
+        "note_values": note_values,
+        "onset_indices": onset_indices,
+        "onset_values": onset_values,
+        "contour_indices": contour_indices,
+        "contour_values": contour_values,
+        "shape_notes": (n_time_frames, N_FREQ_BINS_NOTES),
+        "shape_contours": (n_time_frames, N_FREQ_BINS_CONTOURS),
     }
 
 
