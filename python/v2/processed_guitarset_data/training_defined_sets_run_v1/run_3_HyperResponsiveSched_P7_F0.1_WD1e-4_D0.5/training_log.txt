@@ -1,0 +1,804 @@
+
+--- Rozpoczêcie Nowej Sesji Treningowej: 2025-05-27 04:42:31 ---
+--- Konfiguracja Treningu ---
+  NUM_EPOCHS: 500
+  LEARNING_RATE_INIT: 0.0003
+  BATCH_SIZE: 1
+  OPTIMIZER_TYPE: AdamW
+  WEIGHT_DECAY: 0.0001
+  SCHEDULER_TYPE: ReduceLROnPlateau
+  SCHEDULER_PATIENCE: 7
+  SCHEDULER_FACTOR: 0.1
+  ONSET_LOSS_WEIGHT: 8.0
+  FRET_LOSS_WEIGHT: 1.0
+  ONSET_POS_WEIGHT_USED: 10.0
+  FRET_NUM_CLASSES: 22
+  FRET_IGNORE_INDEX_LOSS: None
+  ARTIFACTS_DIR: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5
+  LOG_FILE_PATH: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5\training_log.txt
+  CLEAR_CONSOLE_EVERY_N_EPOCHS: 10
+  CLEAR_OUTPUT_FUNC: Function provided
+  PLOT_PREDICTIONS_EVERY_N_EPOCHS: 25
+  ONSET_PREDICTION_THRESHOLD: 0.5
+  EARLY_STOPPING_PATIENCE: 25
+  CHECKPOINT_METRIC: val_onset_f1
+  SAMPLE_RATE: 22050
+  HOP_LENGTH: 512
+  N_MELS: 128
+  MAX_FRETS: 20
+  N_FFT: 2048
+  MODEL_CLASS: GuitarTabCRNN
+  CNN_INPUT_CHANNELS: 1
+  CNN_OUTPUT_CHANNELS: [32, 64, 128, 128, 128]
+  CNN_KERNEL_SIZES: [(3, 3), (3, 3), (3, 3), (3, 3), (3, 3)]
+  CNN_STRIDES: [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
+  CNN_PADDINGS: [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
+  CNN_POOLING_KERNELS: [(2, 1), (2, 1), (2, 1), (2, 1), (1, 1)]
+  CNN_POOLING_STRIDES: [(2, 1), (2, 1), (2, 1), (2, 1), (1, 1)]
+  CNN_FEATURE_DIM_PER_FRAME: 1024
+  RNN_HIDDEN_SIZE: 768
+  RNN_LAYERS: 2
+  RNN_DROPOUT: 0.5
+  RANDOM_SEED_DATA_SPLIT: 42
+  RUN_DESCRIPTION: HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5
+------------------------------
+
+--- Epoka 1/500 ---
+  LR: 3.00e-04
+  Train Loss: 3.8565 (Onset: 0.3178, Fret: 1.3138)
+  Val   Loss: 3.3441 (Onset: 0.2628, Fret: 1.2417)
+  Val Ons (Fixed Th=0.50): F1: 0.3710 (P: 0.2413 R: 0.8029 Acc: 0.9338)
+  Val Ons (Opt Th=0.75): F1: 0.4175 (P: 0.3348 R: 0.5543 Acc: 0.9624)
+  Val Fret Acc (Overall): 0.6747 | Val Fret Acc (Active): 0.0004
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.4175 przy optymalnym progu 0.75)
+--------------------------------------------------------------------------------
+--- Epoka 2/500 ---
+  LR: 3.00e-04
+  Train Loss: 3.2064 (Onset: 0.2558, Fret: 1.1601)
+  Val   Loss: 3.2587 (Onset: 0.2561, Fret: 1.2096)
+  Val Ons (Fixed Th=0.50): F1: 0.3692 (P: 0.2374 R: 0.8291 Acc: 0.9311)
+  Val Ons (Opt Th=0.80): F1: 0.4607 (P: 0.3934 R: 0.5559 Acc: 0.9684)
+  Val Fret Acc (Overall): 0.6688 | Val Fret Acc (Active): 0.0211
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.4607 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 3/500 ---
+  LR: 3.00e-04
+  Train Loss: 3.0022 (Onset: 0.2366, Fret: 1.1098)
+  Val   Loss: 3.0124 (Onset: 0.2295, Fret: 1.1763)
+  Val Ons (Fixed Th=0.50): F1: 0.4446 (P: 0.3065 R: 0.8089 Acc: 0.9509)
+  Val Ons (Opt Th=0.75): F1: 0.5070 (P: 0.4269 R: 0.6241 Acc: 0.9705)
+  Val Fret Acc (Overall): 0.6769 | Val Fret Acc (Active): 0.0174
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5070 przy optymalnym progu 0.75)
+--------------------------------------------------------------------------------
+--- Epoka 4/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.8426 (Onset: 0.2225, Fret: 1.0625)
+  Val   Loss: 3.2386 (Onset: 0.2561, Fret: 1.1900)
+  Val Ons (Fixed Th=0.50): F1: 0.4084 (P: 0.2793 R: 0.7598 Acc: 0.9465)
+  Val Ons (Opt Th=0.70): F1: 0.4420 (P: 0.3485 R: 0.6042 Acc: 0.9629)
+  Val Fret Acc (Overall): 0.6751 | Val Fret Acc (Active): 0.0195
+    Brak poprawy val_onset_f1 (przy opt. progu 0.70) od 1 epok (0.4420 vs Best: 0.5070)
+--------------------------------------------------------------------------------
+--- Epoka 5/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.7558 (Onset: 0.2158, Fret: 1.0294)
+  Val   Loss: 2.8194 (Onset: 0.2174, Fret: 1.0803)
+  Val Ons (Fixed Th=0.50): F1: 0.4703 (P: 0.3309 R: 0.8125 Acc: 0.9555)
+  Val Ons (Opt Th=0.75): F1: 0.5209 (P: 0.4451 R: 0.6278 Acc: 0.9719)
+  Val Fret Acc (Overall): 0.6794 | Val Fret Acc (Active): 0.0389
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5209 przy optymalnym progu 0.75)
+--------------------------------------------------------------------------------
+--- Epoka 6/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.5969 (Onset: 0.2005, Fret: 0.9933)
+  Val   Loss: 2.7911 (Onset: 0.2174, Fret: 1.0521)
+  Val Ons (Fixed Th=0.50): F1: 0.4854 (P: 0.3492 R: 0.7958 Acc: 0.9590)
+  Val Ons (Opt Th=0.75): F1: 0.5343 (P: 0.4653 R: 0.6274 Acc: 0.9734)
+  Val Fret Acc (Overall): 0.6846 | Val Fret Acc (Active): 0.0463
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5343 przy optymalnym progu 0.75)
+--------------------------------------------------------------------------------
+--- Epoka 7/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.5421 (Onset: 0.1969, Fret: 0.9669)
+  Val   Loss: 2.6019 (Onset: 0.2000, Fret: 1.0019)
+  Val Ons (Fixed Th=0.50): F1: 0.4832 (P: 0.3398 R: 0.8362 Acc: 0.9565)
+  Val Ons (Opt Th=0.80): F1: 0.5513 (P: 0.5013 R: 0.6124 Acc: 0.9758)
+  Val Fret Acc (Overall): 0.6922 | Val Fret Acc (Active): 0.1044
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5513 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 8/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.4324 (Onset: 0.1871, Fret: 0.9356)
+  Val   Loss: 2.5160 (Onset: 0.1954, Fret: 0.9527)
+  Val Ons (Fixed Th=0.50): F1: 0.4856 (P: 0.3401 R: 0.8487 Acc: 0.9563)
+  Val Ons (Opt Th=0.80): F1: 0.5590 (P: 0.4953 R: 0.6414 Acc: 0.9754)
+  Val Fret Acc (Overall): 0.7012 | Val Fret Acc (Active): 0.1794
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5590 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 9/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.3727 (Onset: 0.1823, Fret: 0.9142)
+  Val   Loss: 2.5152 (Onset: 0.1944, Fret: 0.9603)
+  Val Ons (Fixed Th=0.50): F1: 0.4771 (P: 0.3306 R: 0.8566 Acc: 0.9544)
+  Val Ons (Opt Th=0.85): F1: 0.5713 (P: 0.5457 R: 0.5993 Acc: 0.9781)
+  Val Fret Acc (Overall): 0.6971 | Val Fret Acc (Active): 0.1714
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5713 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 10/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.3576 (Onset: 0.1822, Fret: 0.8996)
+  Val   Loss: 2.6245 (Onset: 0.1996, Fret: 1.0277)
+  Val Ons (Fixed Th=0.50): F1: 0.4828 (P: 0.3384 R: 0.8421 Acc: 0.9562)
+  Val Ons (Opt Th=0.85): F1: 0.5536 (P: 0.4996 R: 0.6207 Acc: 0.9757)
+  Val Fret Acc (Overall): 0.6828 | Val Fret Acc (Active): 0.0924
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 1 epok (0.5536 vs Best: 0.5713)
+--------------------------------------------------------------------------------
+--- Epoka 11/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.3132 (Onset: 0.1801, Fret: 0.8723)
+  Val   Loss: 2.4623 (Onset: 0.1915, Fret: 0.9304)
+  Val Ons (Fixed Th=0.50): F1: 0.4918 (P: 0.3441 R: 0.8614 Acc: 0.9567)
+  Val Ons (Opt Th=0.85): F1: 0.5848 (P: 0.5442 R: 0.6318 Acc: 0.9782)
+  Val Fret Acc (Overall): 0.7095 | Val Fret Acc (Active): 0.1930
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.5848 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 12/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.2013 (Onset: 0.1711, Fret: 0.8329)
+  Val   Loss: 2.5963 (Onset: 0.2119, Fret: 0.9014)
+  Val Ons (Fixed Th=0.50): F1: 0.5112 (P: 0.3794 R: 0.7833 Acc: 0.9636)
+  Val Ons (Opt Th=0.80): F1: 0.5564 (P: 0.5290 R: 0.5867 Acc: 0.9773)
+  Val Fret Acc (Overall): 0.7114 | Val Fret Acc (Active): 0.1807
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 1 epok (0.5564 vs Best: 0.5848)
+--------------------------------------------------------------------------------
+--- Epoka 13/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.1302 (Onset: 0.1655, Fret: 0.8063)
+  Val   Loss: 2.2812 (Onset: 0.1798, Fret: 0.8432)
+  Val Ons (Fixed Th=0.50): F1: 0.5550 (P: 0.4167 R: 0.8307 Acc: 0.9676)
+  Val Ons (Opt Th=0.80): F1: 0.6073 (P: 0.5818 R: 0.6352 Acc: 0.9800)
+  Val Fret Acc (Overall): 0.7277 | Val Fret Acc (Active): 0.2428
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6073 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 14/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.0810 (Onset: 0.1631, Fret: 0.7758)
+  Val   Loss: 2.1564 (Onset: 0.1683, Fret: 0.8098)
+  Val Ons (Fixed Th=0.50): F1: 0.5479 (P: 0.4010 R: 0.8647 Acc: 0.9653)
+  Val Ons (Opt Th=0.80): F1: 0.6336 (P: 0.5862 R: 0.6895 Acc: 0.9806)
+  Val Fret Acc (Overall): 0.7338 | Val Fret Acc (Active): 0.2954
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6336 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 15/500 ---
+  LR: 3.00e-04
+  Train Loss: 2.0318 (Onset: 0.1610, Fret: 0.7434)
+  Val   Loss: 2.2058 (Onset: 0.1722, Fret: 0.8280)
+  Val Ons (Fixed Th=0.50): F1: 0.5584 (P: 0.4160 R: 0.8490 Acc: 0.9674)
+  Val Ons (Opt Th=0.80): F1: 0.6269 (P: 0.5812 R: 0.6804 Acc: 0.9803)
+  Val Fret Acc (Overall): 0.7364 | Val Fret Acc (Active): 0.2705
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 1 epok (0.6269 vs Best: 0.6336)
+--------------------------------------------------------------------------------
+--- Epoka 16/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.9446 (Onset: 0.1551, Fret: 0.7037)
+  Val   Loss: 2.2900 (Onset: 0.1827, Fret: 0.8288)
+  Val Ons (Fixed Th=0.50): F1: 0.5138 (P: 0.3664 R: 0.8595 Acc: 0.9605)
+  Val Ons (Opt Th=0.85): F1: 0.6021 (P: 0.5545 R: 0.6586 Acc: 0.9788)
+  Val Fret Acc (Overall): 0.7233 | Val Fret Acc (Active): 0.2780
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 2 epok (0.6021 vs Best: 0.6336)
+--------------------------------------------------------------------------------
+--- Epoka 17/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.9193 (Onset: 0.1571, Fret: 0.6628)
+  Val   Loss: 2.1631 (Onset: 0.1723, Fret: 0.7844)
+  Val Ons (Fixed Th=0.50): F1: 0.5469 (P: 0.4028 R: 0.8516 Acc: 0.9657)
+  Val Ons (Opt Th=0.80): F1: 0.6149 (P: 0.5627 R: 0.6778 Acc: 0.9794)
+  Val Fret Acc (Overall): 0.7419 | Val Fret Acc (Active): 0.3503
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 3 epok (0.6149 vs Best: 0.6336)
+--------------------------------------------------------------------------------
+--- Epoka 18/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.7983 (Onset: 0.1480, Fret: 0.6140)
+  Val   Loss: 2.0091 (Onset: 0.1606, Fret: 0.7242)
+  Val Ons (Fixed Th=0.50): F1: 0.5527 (P: 0.4035 R: 0.8769 Acc: 0.9655)
+  Val Ons (Opt Th=0.85): F1: 0.6450 (P: 0.6186 R: 0.6736 Acc: 0.9820)
+  Val Fret Acc (Overall): 0.7560 | Val Fret Acc (Active): 0.3692
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6450 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 19/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.7596 (Onset: 0.1456, Fret: 0.5947)
+  Val   Loss: 2.1940 (Onset: 0.1800, Fret: 0.7542)
+  Val Ons (Fixed Th=0.50): F1: 0.4787 (P: 0.3267 R: 0.8951 Acc: 0.9526)
+  Val Ons (Opt Th=0.90): F1: 0.6061 (P: 0.5845 R: 0.6294 Acc: 0.9801)
+  Val Fret Acc (Overall): 0.7426 | Val Fret Acc (Active): 0.3896
+    Brak poprawy val_onset_f1 (przy opt. progu 0.90) od 1 epok (0.6061 vs Best: 0.6450)
+--------------------------------------------------------------------------------
+--- Epoka 20/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.7445 (Onset: 0.1472, Fret: 0.5666)
+  Val   Loss: 1.9980 (Onset: 0.1668, Fret: 0.6639)
+  Val Ons (Fixed Th=0.50): F1: 0.5964 (P: 0.4631 R: 0.8375 Acc: 0.9725)
+  Val Ons (Opt Th=0.80): F1: 0.6537 (P: 0.6450 R: 0.6627 Acc: 0.9829)
+  Val Fret Acc (Overall): 0.7911 | Val Fret Acc (Active): 0.4552
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6537 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 21/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.6951 (Onset: 0.1441, Fret: 0.5421)
+  Val   Loss: 1.9174 (Onset: 0.1616, Fret: 0.6245)
+  Val Ons (Fixed Th=0.50): F1: 0.5561 (P: 0.4076 R: 0.8751 Acc: 0.9660)
+  Val Ons (Opt Th=0.80): F1: 0.6427 (P: 0.5892 R: 0.7069 Acc: 0.9809)
+  Val Fret Acc (Overall): 0.8035 | Val Fret Acc (Active): 0.4928
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 1 epok (0.6427 vs Best: 0.6537)
+--------------------------------------------------------------------------------
+--- Epoka 22/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.5544 (Onset: 0.1350, Fret: 0.4743)
+  Val   Loss: 1.8704 (Onset: 0.1533, Fret: 0.6443)
+  Val Ons (Fixed Th=0.50): F1: 0.5859 (P: 0.4400 R: 0.8768 Acc: 0.9699)
+  Val Ons (Opt Th=0.80): F1: 0.6622 (P: 0.6143 R: 0.7183 Acc: 0.9822)
+  Val Fret Acc (Overall): 0.7935 | Val Fret Acc (Active): 0.4579
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6622 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 23/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.6134 (Onset: 0.1402, Fret: 0.4919)
+  Val   Loss: 1.8299 (Onset: 0.1556, Fret: 0.5852)
+  Val Ons (Fixed Th=0.50): F1: 0.5891 (P: 0.4456 R: 0.8690 Acc: 0.9705)
+  Val Ons (Opt Th=0.85): F1: 0.6637 (P: 0.6508 R: 0.6772 Acc: 0.9833)
+  Val Fret Acc (Overall): 0.8162 | Val Fret Acc (Active): 0.5588
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6637 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 24/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.4817 (Onset: 0.1334, Fret: 0.4146)
+  Val   Loss: 1.7945 (Onset: 0.1540, Fret: 0.5628)
+  Val Ons (Fixed Th=0.50): F1: 0.5732 (P: 0.4250 R: 0.8800 Acc: 0.9681)
+  Val Ons (Opt Th=0.85): F1: 0.6633 (P: 0.6260 R: 0.7053 Acc: 0.9826)
+  Val Fret Acc (Overall): 0.8263 | Val Fret Acc (Active): 0.5913
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 1 epok (0.6633 vs Best: 0.6637)
+--------------------------------------------------------------------------------
+--- Epoka 25/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.4301 (Onset: 0.1286, Fret: 0.4014)
+  Val   Loss: 1.7700 (Onset: 0.1565, Fret: 0.5183)
+  Val Ons (Fixed Th=0.50): F1: 0.6004 (P: 0.4608 R: 0.8614 Acc: 0.9721)
+  Val Ons (Opt Th=0.80): F1: 0.6677 (P: 0.6389 R: 0.6991 Acc: 0.9831)
+  Val Fret Acc (Overall): 0.8418 | Val Fret Acc (Active): 0.6253
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6677 przy optymalnym progu 0.80)
+  Generowanie wizualizacji predykcji dla epoki 25...
+  Zapisano wykres predykcji do: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5\predictions_epoch_25.png
+--------------------------------------------------------------------------------
+--- Epoka 26/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.3905 (Onset: 0.1272, Fret: 0.3728)
+  Val   Loss: 1.8192 (Onset: 0.1571, Fret: 0.5627)
+  Val Ons (Fixed Th=0.50): F1: 0.6032 (P: 0.4640 R: 0.8617 Acc: 0.9724)
+  Val Ons (Opt Th=0.80): F1: 0.6664 (P: 0.6283 R: 0.7094 Acc: 0.9827)
+  Val Fret Acc (Overall): 0.8301 | Val Fret Acc (Active): 0.5931
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 1 epok (0.6664 vs Best: 0.6677)
+--------------------------------------------------------------------------------
+--- Epoka 27/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.3324 (Onset: 0.1220, Fret: 0.3564)
+  Val   Loss: 1.8003 (Onset: 0.1589, Fret: 0.5289)
+  Val Ons (Fixed Th=0.50): F1: 0.5768 (P: 0.4302 R: 0.8751 Acc: 0.9688)
+  Val Ons (Opt Th=0.85): F1: 0.6642 (P: 0.6264 R: 0.7069 Acc: 0.9826)
+  Val Fret Acc (Overall): 0.8355 | Val Fret Acc (Active): 0.6371
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 2 epok (0.6642 vs Best: 0.6677)
+--------------------------------------------------------------------------------
+--- Epoka 28/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.2692 (Onset: 0.1183, Fret: 0.3227)
+  Val   Loss: 1.7687 (Onset: 0.1560, Fret: 0.5204)
+  Val Ons (Fixed Th=0.50): F1: 0.6189 (P: 0.4858 R: 0.8524 Acc: 0.9745)
+  Val Ons (Opt Th=0.80): F1: 0.6727 (P: 0.6404 R: 0.7084 Acc: 0.9832)
+  Val Fret Acc (Overall): 0.8439 | Val Fret Acc (Active): 0.6235
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6727 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 29/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.2252 (Onset: 0.1149, Fret: 0.3059)
+  Val   Loss: 1.7097 (Onset: 0.1527, Fret: 0.4880)
+  Val Ons (Fixed Th=0.50): F1: 0.6076 (P: 0.4666 R: 0.8706 Acc: 0.9727)
+  Val Ons (Opt Th=0.85): F1: 0.6753 (P: 0.6650 R: 0.6859 Acc: 0.9840)
+  Val Fret Acc (Overall): 0.8559 | Val Fret Acc (Active): 0.6847
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6753 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 30/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.2019 (Onset: 0.1134, Fret: 0.2948)
+  Val   Loss: 1.7669 (Onset: 0.1569, Fret: 0.5116)
+  Val Ons (Fixed Th=0.50): F1: 0.5905 (P: 0.4465 R: 0.8715 Acc: 0.9706)
+  Val Ons (Opt Th=0.85): F1: 0.6630 (P: 0.6378 R: 0.6903 Acc: 0.9829)
+  Val Fret Acc (Overall): 0.8452 | Val Fret Acc (Active): 0.6592
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 1 epok (0.6630 vs Best: 0.6753)
+--------------------------------------------------------------------------------
+--- Epoka 31/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.1976 (Onset: 0.1131, Fret: 0.2930)
+  Val   Loss: 1.8002 (Onset: 0.1655, Fret: 0.4763)
+  Val Ons (Fixed Th=0.50): F1: 0.6110 (P: 0.4772 R: 0.8488 Acc: 0.9737)
+  Val Ons (Opt Th=0.80): F1: 0.6621 (P: 0.6217 R: 0.7081 Acc: 0.9824)
+  Val Fret Acc (Overall): 0.8589 | Val Fret Acc (Active): 0.6787
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 2 epok (0.6621 vs Best: 0.6753)
+--------------------------------------------------------------------------------
+--- Epoka 32/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.1708 (Onset: 0.1121, Fret: 0.2744)
+  Val   Loss: 1.8979 (Onset: 0.1762, Fret: 0.4881)
+  Val Ons (Fixed Th=0.50): F1: 0.5994 (P: 0.4684 R: 0.8321 Acc: 0.9730)
+  Val Ons (Opt Th=0.80): F1: 0.6473 (P: 0.6163 R: 0.6817 Acc: 0.9819)
+  Val Fret Acc (Overall): 0.8565 | Val Fret Acc (Active): 0.6704
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 3 epok (0.6473 vs Best: 0.6753)
+--------------------------------------------------------------------------------
+--- Epoka 33/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.1194 (Onset: 0.1073, Fret: 0.2612)
+  Val   Loss: 1.7085 (Onset: 0.1570, Fret: 0.4528)
+  Val Ons (Fixed Th=0.50): F1: 0.6088 (P: 0.4691 R: 0.8671 Acc: 0.9729)
+  Val Ons (Opt Th=0.85): F1: 0.6747 (P: 0.6482 R: 0.7035 Acc: 0.9835)
+  Val Fret Acc (Overall): 0.8657 | Val Fret Acc (Active): 0.7184
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 4 epok (0.6747 vs Best: 0.6753)
+--------------------------------------------------------------------------------
+--- Epoka 34/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.1305 (Onset: 0.1082, Fret: 0.2651)
+  Val   Loss: 1.7612 (Onset: 0.1604, Fret: 0.4782)
+  Val Ons (Fixed Th=0.50): F1: 0.6225 (P: 0.4892 R: 0.8556 Acc: 0.9748)
+  Val Ons (Opt Th=0.85): F1: 0.6760 (P: 0.6669 R: 0.6854 Acc: 0.9840)
+  Val Fret Acc (Overall): 0.8617 | Val Fret Acc (Active): 0.7012
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6760 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 35/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.0510 (Onset: 0.1015, Fret: 0.2394)
+  Val   Loss: 1.6821 (Onset: 0.1549, Fret: 0.4431)
+  Val Ons (Fixed Th=0.50): F1: 0.6212 (P: 0.4836 R: 0.8680 Acc: 0.9743)
+  Val Ons (Opt Th=0.85): F1: 0.6837 (P: 0.6670 R: 0.7012 Acc: 0.9842)
+  Val Fret Acc (Overall): 0.8715 | Val Fret Acc (Active): 0.7072
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6837 przy optymalnym progu 0.85)
+--------------------------------------------------------------------------------
+--- Epoka 36/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.0537 (Onset: 0.1019, Fret: 0.2388)
+  Val   Loss: 1.8889 (Onset: 0.1748, Fret: 0.4902)
+  Val Ons (Fixed Th=0.50): F1: 0.6092 (P: 0.4787 R: 0.8373 Acc: 0.9739)
+  Val Ons (Opt Th=0.80): F1: 0.6571 (P: 0.6173 R: 0.7023 Acc: 0.9822)
+  Val Fret Acc (Overall): 0.8579 | Val Fret Acc (Active): 0.6928
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 1 epok (0.6571 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 37/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.0011 (Onset: 0.0970, Fret: 0.2253)
+  Val   Loss: 1.7106 (Onset: 0.1575, Fret: 0.4505)
+  Val Ons (Fixed Th=0.50): F1: 0.6136 (P: 0.4730 R: 0.8731 Acc: 0.9733)
+  Val Ons (Opt Th=0.85): F1: 0.6786 (P: 0.6431 R: 0.7183 Acc: 0.9835)
+  Val Fret Acc (Overall): 0.8683 | Val Fret Acc (Active): 0.7396
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 2 epok (0.6786 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 38/500 ---
+  LR: 3.00e-04
+  Train Loss: 0.9937 (Onset: 0.0974, Fret: 0.2142)
+  Val   Loss: 1.7997 (Onset: 0.1664, Fret: 0.4681)
+  Val Ons (Fixed Th=0.50): F1: 0.6316 (P: 0.5042 R: 0.8454 Acc: 0.9760)
+  Val Ons (Opt Th=0.85): F1: 0.6794 (P: 0.6775 R: 0.6813 Acc: 0.9844)
+  Val Fret Acc (Overall): 0.8649 | Val Fret Acc (Active): 0.6846
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 3 epok (0.6794 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 39/500 ---
+  LR: 3.00e-04
+  Train Loss: 0.9678 (Onset: 0.0949, Fret: 0.2083)
+  Val   Loss: 1.7982 (Onset: 0.1688, Fret: 0.4479)
+  Val Ons (Fixed Th=0.50): F1: 0.6133 (P: 0.4795 R: 0.8507 Acc: 0.9739)
+  Val Ons (Opt Th=0.85): F1: 0.6684 (P: 0.6526 R: 0.6849 Acc: 0.9835)
+  Val Fret Acc (Overall): 0.8652 | Val Fret Acc (Active): 0.6933
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 4 epok (0.6684 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 40/500 ---
+  LR: 3.00e-04
+  Train Loss: 0.9660 (Onset: 0.0940, Fret: 0.2142)
+  Val   Loss: 2.1782 (Onset: 0.1836, Fret: 0.7091)
+  Val Ons (Fixed Th=0.50): F1: 0.5905 (P: 0.4559 R: 0.8380 Acc: 0.9718)
+  Val Ons (Opt Th=0.85): F1: 0.6483 (P: 0.6325 R: 0.6648 Acc: 0.9825)
+  Val Fret Acc (Overall): 0.8321 | Val Fret Acc (Active): 0.6595
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 5 epok (0.6483 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 41/500 ---
+  LR: 3.00e-04
+  Train Loss: 1.0026 (Onset: 0.0967, Fret: 0.2288)
+  Val   Loss: 1.9626 (Onset: 0.1847, Fret: 0.4849)
+  Val Ons (Fixed Th=0.50): F1: 0.6233 (P: 0.5022 R: 0.8215 Acc: 0.9759)
+  Val Ons (Opt Th=0.75): F1: 0.6578 (P: 0.6055 R: 0.7200 Acc: 0.9818)
+  Val Fret Acc (Overall): 0.8610 | Val Fret Acc (Active): 0.7009
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 6 epok (0.6578 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 42/500 ---
+  LR: 3.00e-04
+  Train Loss: 0.9322 (Onset: 0.0918, Fret: 0.1979)
+  Val   Loss: 1.8121 (Onset: 0.1728, Fret: 0.4296)
+  Val Ons (Fixed Th=0.50): F1: 0.6319 (P: 0.5046 R: 0.8451 Acc: 0.9761)
+  Val Ons (Opt Th=0.85): F1: 0.6811 (P: 0.6769 R: 0.6854 Acc: 0.9844)
+  Val Fret Acc (Overall): 0.8776 | Val Fret Acc (Active): 0.7443
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 7 epok (0.6811 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 43/500 ---
+  LR: 3.00e-04
+  Train Loss: 0.8995 (Onset: 0.0894, Fret: 0.1841)
+  Val   Loss: 1.8427 (Onset: 0.1738, Fret: 0.4526)
+  Val Ons (Fixed Th=0.50): F1: 0.6254 (P: 0.4971 R: 0.8429 Acc: 0.9755)
+  Val Ons (Opt Th=0.80): F1: 0.6701 (P: 0.6236 R: 0.7242 Acc: 0.9827)
+  Val Fret Acc (Overall): 0.8710 | Val Fret Acc (Active): 0.7250
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 8 epok (0.6701 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 44/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.8345 (Onset: 0.0832, Fret: 0.1688)
+  Val   Loss: 1.8044 (Onset: 0.1729, Fret: 0.4210)
+  Val Ons (Fixed Th=0.50): F1: 0.6423 (P: 0.5231 R: 0.8318 Acc: 0.9775)
+  Val Ons (Opt Th=0.80): F1: 0.6803 (P: 0.6532 R: 0.7098 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8803 | Val Fret Acc (Active): 0.7481
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 9 epok (0.6803 vs Best: 0.6837)
+--------------------------------------------------------------------------------
+--- Epoka 45/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7797 (Onset: 0.0778, Fret: 0.1575)
+  Val   Loss: 1.8086 (Onset: 0.1734, Fret: 0.4214)
+  Val Ons (Fixed Th=0.50): F1: 0.6533 (P: 0.5380 R: 0.8316 Acc: 0.9786)
+  Val Ons (Opt Th=0.80): F1: 0.6885 (P: 0.6661 R: 0.7124 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8809 | Val Fret Acc (Active): 0.7505
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6885 przy optymalnym progu 0.80)
+--------------------------------------------------------------------------------
+--- Epoka 46/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7883 (Onset: 0.0787, Fret: 0.1589)
+  Val   Loss: 1.8132 (Onset: 0.1737, Fret: 0.4236)
+  Val Ons (Fixed Th=0.50): F1: 0.6448 (P: 0.5253 R: 0.8346 Acc: 0.9777)
+  Val Ons (Opt Th=0.85): F1: 0.6781 (P: 0.6877 R: 0.6687 Acc: 0.9846)
+  Val Fret Acc (Overall): 0.8792 | Val Fret Acc (Active): 0.7529
+    Brak poprawy val_onset_f1 (przy opt. progu 0.85) od 1 epok (0.6781 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 47/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7722 (Onset: 0.0769, Fret: 0.1572)
+  Val   Loss: 1.8791 (Onset: 0.1808, Fret: 0.4324)
+  Val Ons (Fixed Th=0.50): F1: 0.6486 (P: 0.5341 R: 0.8255 Acc: 0.9783)
+  Val Ons (Opt Th=0.80): F1: 0.6796 (P: 0.6584 R: 0.7022 Acc: 0.9839)
+  Val Fret Acc (Overall): 0.8769 | Val Fret Acc (Active): 0.7393
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 2 epok (0.6796 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 48/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7678 (Onset: 0.0767, Fret: 0.1539)
+  Val   Loss: 1.9317 (Onset: 0.1884, Fret: 0.4245)
+  Val Ons (Fixed Th=0.50): F1: 0.6526 (P: 0.5438 R: 0.8159 Acc: 0.9789)
+  Val Ons (Opt Th=0.80): F1: 0.6813 (P: 0.6661 R: 0.6971 Acc: 0.9841)
+  Val Fret Acc (Overall): 0.8796 | Val Fret Acc (Active): 0.7377
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 3 epok (0.6813 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 49/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7641 (Onset: 0.0768, Fret: 0.1496)
+  Val   Loss: 1.8714 (Onset: 0.1816, Fret: 0.4186)
+  Val Ons (Fixed Th=0.50): F1: 0.6585 (P: 0.5491 R: 0.8225 Acc: 0.9793)
+  Val Ons (Opt Th=0.80): F1: 0.6855 (P: 0.6709 R: 0.7007 Acc: 0.9844)
+  Val Fret Acc (Overall): 0.8821 | Val Fret Acc (Active): 0.7502
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 4 epok (0.6855 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 50/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7803 (Onset: 0.0784, Fret: 0.1529)
+  Val   Loss: 2.0304 (Onset: 0.1989, Fret: 0.4395)
+  Val Ons (Fixed Th=0.50): F1: 0.6501 (P: 0.5444 R: 0.8068 Acc: 0.9789)
+  Val Ons (Opt Th=0.80): F1: 0.6757 (P: 0.6665 R: 0.6852 Acc: 0.9840)
+  Val Fret Acc (Overall): 0.8750 | Val Fret Acc (Active): 0.7203
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 5 epok (0.6757 vs Best: 0.6885)
+  Generowanie wizualizacji predykcji dla epoki 50...
+  Zapisano wykres predykcji do: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5\predictions_epoch_50.png
+--------------------------------------------------------------------------------
+--- Epoka 51/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7244 (Onset: 0.0720, Fret: 0.1483)
+  Val   Loss: 1.8985 (Onset: 0.1820, Fret: 0.4426)
+  Val Ons (Fixed Th=0.50): F1: 0.6504 (P: 0.5380 R: 0.8223 Acc: 0.9785)
+  Val Ons (Opt Th=0.75): F1: 0.6782 (P: 0.6339 R: 0.7291 Acc: 0.9832)
+  Val Fret Acc (Overall): 0.8745 | Val Fret Acc (Active): 0.7374
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 6 epok (0.6782 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 52/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7399 (Onset: 0.0740, Fret: 0.1476)
+  Val   Loss: 1.8414 (Onset: 0.1782, Fret: 0.4154)
+  Val Ons (Fixed Th=0.50): F1: 0.6609 (P: 0.5489 R: 0.8304 Acc: 0.9793)
+  Val Ons (Opt Th=0.80): F1: 0.6854 (P: 0.6675 R: 0.7042 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8835 | Val Fret Acc (Active): 0.7567
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 7 epok (0.6854 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 53/500 ---
+  LR: 3.00e-05
+  Train Loss: 0.7104 (Onset: 0.0710, Fret: 0.1427)
+  Val   Loss: 1.9931 (Onset: 0.1957, Fret: 0.4277)
+  Val Ons (Fixed Th=0.50): F1: 0.6666 (P: 0.5666 R: 0.8095 Acc: 0.9803)
+  Val Ons (Opt Th=0.75): F1: 0.6868 (P: 0.6586 R: 0.7176 Acc: 0.9841)
+  Val Fret Acc (Overall): 0.8800 | Val Fret Acc (Active): 0.7383
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 8 epok (0.6868 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 54/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7161 (Onset: 0.0718, Fret: 0.1413)
+  Val   Loss: 1.8849 (Onset: 0.1829, Fret: 0.4217)
+  Val Ons (Fixed Th=0.50): F1: 0.6628 (P: 0.5540 R: 0.8249 Acc: 0.9796)
+  Val Ons (Opt Th=0.75): F1: 0.6870 (P: 0.6474 R: 0.7317 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8820 | Val Fret Acc (Active): 0.7508
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 9 epok (0.6870 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 55/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7022 (Onset: 0.0702, Fret: 0.1407)
+  Val   Loss: 1.9195 (Onset: 0.1868, Fret: 0.4252)
+  Val Ons (Fixed Th=0.50): F1: 0.6579 (P: 0.5513 R: 0.8156 Acc: 0.9794)
+  Val Ons (Opt Th=0.80): F1: 0.6852 (P: 0.6746 R: 0.6961 Acc: 0.9845)
+  Val Fret Acc (Overall): 0.8797 | Val Fret Acc (Active): 0.7467
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 10 epok (0.6852 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 56/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7137 (Onset: 0.0717, Fret: 0.1404)
+  Val   Loss: 2.0082 (Onset: 0.1976, Fret: 0.4272)
+  Val Ons (Fixed Th=0.50): F1: 0.6625 (P: 0.5603 R: 0.8102 Acc: 0.9799)
+  Val Ons (Opt Th=0.80): F1: 0.6848 (P: 0.6783 R: 0.6915 Acc: 0.9845)
+  Val Fret Acc (Overall): 0.8802 | Val Fret Acc (Active): 0.7306
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 11 epok (0.6848 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 57/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7184 (Onset: 0.0722, Fret: 0.1406)
+  Val   Loss: 1.9025 (Onset: 0.1852, Fret: 0.4209)
+  Val Ons (Fixed Th=0.50): F1: 0.6603 (P: 0.5531 R: 0.8190 Acc: 0.9795)
+  Val Ons (Opt Th=0.75): F1: 0.6866 (P: 0.6478 R: 0.7304 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8815 | Val Fret Acc (Active): 0.7501
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 12 epok (0.6866 vs Best: 0.6885)
+--------------------------------------------------------------------------------
+--- Epoka 58/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7020 (Onset: 0.0703, Fret: 0.1398)
+  Val   Loss: 1.8731 (Onset: 0.1824, Fret: 0.4141)
+  Val Ons (Fixed Th=0.50): F1: 0.6651 (P: 0.5578 R: 0.8236 Acc: 0.9798)
+  Val Ons (Opt Th=0.75): F1: 0.6889 (P: 0.6496 R: 0.7333 Acc: 0.9839)
+  Val Fret Acc (Overall): 0.8845 | Val Fret Acc (Active): 0.7577
+    -> Zapisano nowy najlepszy model (val_onset_f1: 0.6889 przy optymalnym progu 0.75)
+--------------------------------------------------------------------------------
+--- Epoka 59/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.6930 (Onset: 0.0692, Fret: 0.1392)
+  Val   Loss: 1.9291 (Onset: 0.1877, Fret: 0.4273)
+  Val Ons (Fixed Th=0.50): F1: 0.6584 (P: 0.5507 R: 0.8184 Acc: 0.9794)
+  Val Ons (Opt Th=0.75): F1: 0.6843 (P: 0.6463 R: 0.7271 Acc: 0.9837)
+  Val Fret Acc (Overall): 0.8790 | Val Fret Acc (Active): 0.7430
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 1 epok (0.6843 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 60/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7311 (Onset: 0.0735, Fret: 0.1430)
+  Val   Loss: 1.9319 (Onset: 0.1879, Fret: 0.4290)
+  Val Ons (Fixed Th=0.50): F1: 0.6572 (P: 0.5492 R: 0.8180 Acc: 0.9793)
+  Val Ons (Opt Th=0.75): F1: 0.6851 (P: 0.6468 R: 0.7284 Acc: 0.9837)
+  Val Fret Acc (Overall): 0.8786 | Val Fret Acc (Active): 0.7426
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 2 epok (0.6851 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 61/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7202 (Onset: 0.0722, Fret: 0.1425)
+  Val   Loss: 2.0185 (Onset: 0.1991, Fret: 0.4256)
+  Val Ons (Fixed Th=0.50): F1: 0.6618 (P: 0.5606 R: 0.8076 Acc: 0.9799)
+  Val Ons (Opt Th=0.70): F1: 0.6840 (P: 0.6335 R: 0.7434 Acc: 0.9833)
+  Val Fret Acc (Overall): 0.8811 | Val Fret Acc (Active): 0.7359
+    Brak poprawy val_onset_f1 (przy opt. progu 0.70) od 3 epok (0.6840 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 62/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7153 (Onset: 0.0718, Fret: 0.1411)
+  Val   Loss: 2.0080 (Onset: 0.1974, Fret: 0.4289)
+  Val Ons (Fixed Th=0.50): F1: 0.6606 (P: 0.5597 R: 0.8058 Acc: 0.9799)
+  Val Ons (Opt Th=0.75): F1: 0.6836 (P: 0.6539 R: 0.7161 Acc: 0.9839)
+  Val Fret Acc (Overall): 0.8788 | Val Fret Acc (Active): 0.7352
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 4 epok (0.6836 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 63/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7104 (Onset: 0.0715, Fret: 0.1387)
+  Val   Loss: 1.8691 (Onset: 0.1808, Fret: 0.4227)
+  Val Ons (Fixed Th=0.50): F1: 0.6605 (P: 0.5508 R: 0.8248 Acc: 0.9794)
+  Val Ons (Opt Th=0.75): F1: 0.6861 (P: 0.6445 R: 0.7334 Acc: 0.9837)
+  Val Fret Acc (Overall): 0.8821 | Val Fret Acc (Active): 0.7580
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 5 epok (0.6861 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 64/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7138 (Onset: 0.0716, Fret: 0.1409)
+  Val   Loss: 1.9178 (Onset: 0.1863, Fret: 0.4271)
+  Val Ons (Fixed Th=0.50): F1: 0.6557 (P: 0.5468 R: 0.8189 Acc: 0.9791)
+  Val Ons (Opt Th=0.80): F1: 0.6825 (P: 0.6670 R: 0.6987 Acc: 0.9842)
+  Val Fret Acc (Overall): 0.8797 | Val Fret Acc (Active): 0.7492
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 6 epok (0.6825 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 65/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7032 (Onset: 0.0704, Fret: 0.1400)
+  Val   Loss: 2.0707 (Onset: 0.2031, Fret: 0.4459)
+  Val Ons (Fixed Th=0.50): F1: 0.6542 (P: 0.5523 R: 0.8020 Acc: 0.9794)
+  Val Ons (Opt Th=0.75): F1: 0.6774 (P: 0.6478 R: 0.7098 Acc: 0.9836)
+  Val Fret Acc (Overall): 0.8734 | Val Fret Acc (Active): 0.7207
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 7 epok (0.6774 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 66/500 ---
+  LR: 3.00e-06
+  Train Loss: 0.7011 (Onset: 0.0701, Fret: 0.1400)
+  Val   Loss: 2.0069 (Onset: 0.1970, Fret: 0.4310)
+  Val Ons (Fixed Th=0.50): F1: 0.6571 (P: 0.5539 R: 0.8076 Acc: 0.9795)
+  Val Ons (Opt Th=0.75): F1: 0.6836 (P: 0.6512 R: 0.7195 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8785 | Val Fret Acc (Active): 0.7342
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 8 epok (0.6836 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 67/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.6996 (Onset: 0.0702, Fret: 0.1384)
+  Val   Loss: 1.9469 (Onset: 0.1906, Fret: 0.4222)
+  Val Ons (Fixed Th=0.50): F1: 0.6632 (P: 0.5589 R: 0.8153 Acc: 0.9799)
+  Val Ons (Opt Th=0.75): F1: 0.6859 (P: 0.6491 R: 0.7271 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8821 | Val Fret Acc (Active): 0.7450
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 9 epok (0.6859 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 68/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7289 (Onset: 0.0734, Fret: 0.1421)
+  Val   Loss: 2.0640 (Onset: 0.2034, Fret: 0.4371)
+  Val Ons (Fixed Th=0.50): F1: 0.6573 (P: 0.5574 R: 0.8009 Acc: 0.9797)
+  Val Ons (Opt Th=0.75): F1: 0.6821 (P: 0.6538 R: 0.7128 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8765 | Val Fret Acc (Active): 0.7262
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 10 epok (0.6821 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 69/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7176 (Onset: 0.0721, Fret: 0.1410)
+  Val   Loss: 1.9124 (Onset: 0.1863, Fret: 0.4218)
+  Val Ons (Fixed Th=0.50): F1: 0.6636 (P: 0.5579 R: 0.8186 Acc: 0.9798)
+  Val Ons (Opt Th=0.75): F1: 0.6878 (P: 0.6510 R: 0.7291 Acc: 0.9839)
+  Val Fret Acc (Overall): 0.8824 | Val Fret Acc (Active): 0.7510
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 11 epok (0.6878 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 70/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7110 (Onset: 0.0713, Fret: 0.1409)
+  Val   Loss: 1.9205 (Onset: 0.1874, Fret: 0.4211)
+  Val Ons (Fixed Th=0.50): F1: 0.6605 (P: 0.5531 R: 0.8196 Acc: 0.9795)
+  Val Ons (Opt Th=0.75): F1: 0.6862 (P: 0.6467 R: 0.7308 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8821 | Val Fret Acc (Active): 0.7489
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 12 epok (0.6862 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 71/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7015 (Onset: 0.0703, Fret: 0.1390)
+  Val   Loss: 1.9464 (Onset: 0.1902, Fret: 0.4248)
+  Val Ons (Fixed Th=0.50): F1: 0.6556 (P: 0.5474 R: 0.8170 Acc: 0.9791)
+  Val Ons (Opt Th=0.80): F1: 0.6826 (P: 0.6690 R: 0.6968 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8801 | Val Fret Acc (Active): 0.7465
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 13 epok (0.6826 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 72/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.6953 (Onset: 0.0698, Fret: 0.1366)
+  Val   Loss: 1.9533 (Onset: 0.1923, Fret: 0.4151)
+  Val Ons (Fixed Th=0.50): F1: 0.6664 (P: 0.5662 R: 0.8097 Acc: 0.9803)
+  Val Ons (Opt Th=0.75): F1: 0.6868 (P: 0.6560 R: 0.7206 Acc: 0.9840)
+  Val Fret Acc (Overall): 0.8846 | Val Fret Acc (Active): 0.7514
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 14 epok (0.6868 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 73/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7070 (Onset: 0.0710, Fret: 0.1388)
+  Val   Loss: 1.9964 (Onset: 0.1951, Fret: 0.4353)
+  Val Ons (Fixed Th=0.50): F1: 0.6572 (P: 0.5508 R: 0.8146 Acc: 0.9793)
+  Val Ons (Opt Th=0.80): F1: 0.6813 (P: 0.6717 R: 0.6912 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8776 | Val Fret Acc (Active): 0.7352
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 15 epok (0.6813 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 74/500 ---
+  LR: 3.00e-07
+  Train Loss: 0.7031 (Onset: 0.0707, Fret: 0.1376)
+  Val   Loss: 1.8654 (Onset: 0.1793, Fret: 0.4310)
+  Val Ons (Fixed Th=0.50): F1: 0.6582 (P: 0.5452 R: 0.8303 Acc: 0.9790)
+  Val Ons (Opt Th=0.75): F1: 0.6841 (P: 0.6389 R: 0.7362 Acc: 0.9835)
+  Val Fret Acc (Overall): 0.8792 | Val Fret Acc (Active): 0.7560
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 16 epok (0.6841 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 75/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7264 (Onset: 0.0732, Fret: 0.1409)
+  Val   Loss: 2.0366 (Onset: 0.2004, Fret: 0.4330)
+  Val Ons (Fixed Th=0.50): F1: 0.6576 (P: 0.5558 R: 0.8049 Acc: 0.9796)
+  Val Ons (Opt Th=0.75): F1: 0.6825 (P: 0.6524 R: 0.7156 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8778 | Val Fret Acc (Active): 0.7303
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 17 epok (0.6825 vs Best: 0.6889)
+  Generowanie wizualizacji predykcji dla epoki 75...
+  Zapisano wykres predykcji do: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5\predictions_epoch_75.png
+--------------------------------------------------------------------------------
+--- Epoka 76/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7097 (Onset: 0.0710, Fret: 0.1421)
+  Val   Loss: 1.9671 (Onset: 0.1924, Fret: 0.4276)
+  Val Ons (Fixed Th=0.50): F1: 0.6566 (P: 0.5514 R: 0.8112 Acc: 0.9794)
+  Val Ons (Opt Th=0.80): F1: 0.6820 (P: 0.6736 R: 0.6906 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8794 | Val Fret Acc (Active): 0.7429
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 18 epok (0.6820 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 77/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7170 (Onset: 0.0721, Fret: 0.1402)
+  Val   Loss: 1.9222 (Onset: 0.1878, Fret: 0.4198)
+  Val Ons (Fixed Th=0.50): F1: 0.6645 (P: 0.5593 R: 0.8184 Acc: 0.9799)
+  Val Ons (Opt Th=0.75): F1: 0.6871 (P: 0.6506 R: 0.7280 Acc: 0.9839)
+  Val Fret Acc (Overall): 0.8831 | Val Fret Acc (Active): 0.7489
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 19 epok (0.6871 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 78/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.6979 (Onset: 0.0697, Fret: 0.1399)
+  Val   Loss: 1.8989 (Onset: 0.1849, Fret: 0.4199)
+  Val Ons (Fixed Th=0.50): F1: 0.6611 (P: 0.5540 R: 0.8196 Acc: 0.9796)
+  Val Ons (Opt Th=0.75): F1: 0.6859 (P: 0.6483 R: 0.7281 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8822 | Val Fret Acc (Active): 0.7527
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 20 epok (0.6859 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 79/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7049 (Onset: 0.0706, Fret: 0.1401)
+  Val   Loss: 1.8939 (Onset: 0.1843, Fret: 0.4197)
+  Val Ons (Fixed Th=0.50): F1: 0.6588 (P: 0.5499 R: 0.8215 Acc: 0.9793)
+  Val Ons (Opt Th=0.80): F1: 0.6853 (P: 0.6693 R: 0.7020 Acc: 0.9843)
+  Val Fret Acc (Overall): 0.8821 | Val Fret Acc (Active): 0.7557
+    Brak poprawy val_onset_f1 (przy opt. progu 0.80) od 21 epok (0.6853 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 80/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7055 (Onset: 0.0706, Fret: 0.1404)
+  Val   Loss: 1.9412 (Onset: 0.1896, Fret: 0.4245)
+  Val Ons (Fixed Th=0.50): F1: 0.6641 (P: 0.5604 R: 0.8148 Acc: 0.9800)
+  Val Ons (Opt Th=0.75): F1: 0.6871 (P: 0.6540 R: 0.7238 Acc: 0.9840)
+  Val Fret Acc (Overall): 0.8811 | Val Fret Acc (Active): 0.7470
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 22 epok (0.6871 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 81/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7190 (Onset: 0.0724, Fret: 0.1398)
+  Val   Loss: 2.0613 (Onset: 0.2018, Fret: 0.4466)
+  Val Ons (Fixed Th=0.50): F1: 0.6571 (P: 0.5542 R: 0.8068 Acc: 0.9795)
+  Val Ons (Opt Th=0.75): F1: 0.6815 (P: 0.6521 R: 0.7137 Acc: 0.9838)
+  Val Fret Acc (Overall): 0.8734 | Val Fret Acc (Active): 0.7201
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 23 epok (0.6815 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 82/500 ---
+  LR: 3.00e-08
+  Train Loss: 0.7038 (Onset: 0.0706, Fret: 0.1391)
+  Val   Loss: 1.9160 (Onset: 0.1860, Fret: 0.4283)
+  Val Ons (Fixed Th=0.50): F1: 0.6593 (P: 0.5523 R: 0.8176 Acc: 0.9795)
+  Val Ons (Opt Th=0.75): F1: 0.6851 (P: 0.6469 R: 0.7281 Acc: 0.9837)
+  Val Fret Acc (Overall): 0.8808 | Val Fret Acc (Active): 0.7487
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 24 epok (0.6851 vs Best: 0.6889)
+--------------------------------------------------------------------------------
+--- Epoka 83/500 ---
+  LR: 3.00e-09
+  Train Loss: 0.6963 (Onset: 0.0696, Fret: 0.1398)
+  Val   Loss: 1.8987 (Onset: 0.1842, Fret: 0.4250)
+  Val Ons (Fixed Th=0.50): F1: 0.6584 (P: 0.5492 R: 0.8219 Acc: 0.9793)
+  Val Ons (Opt Th=0.75): F1: 0.6830 (P: 0.6419 R: 0.7297 Acc: 0.9835)
+  Val Fret Acc (Overall): 0.8802 | Val Fret Acc (Active): 0.7530
+    Brak poprawy val_onset_f1 (przy opt. progu 0.75) od 25 epok (0.6830 vs Best: 0.6889)
+    Wczesne zatrzymanie treningu po 25 epokach bez poprawy dla metryki 'val_onset_f1'.
+
+  Generowanie wizualizacji predykcji dla epoki 83 (early stop)...
+  Zapisano wykres predykcji (early stop) do: C:\Users\lukig\Documents\Programming\music-transcription\python\v2\processed_guitarset_data\training_defined_sets_run_v1\run_3_HyperResponsiveSched_P7_F0.1_WD1e-4_D0.5\predictions_epoch_83_earlystop.png
+
+--- Koniec Sesji Treningowej: 2025-05-27 07:25:40 ---
+
