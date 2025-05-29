@@ -1,0 +1,86 @@
+[
+    {
+        "run_description": "BestSoFar_V2Run1_H512_L1_D0.6_OPW5_OLW8_WD1e-4_LR3e-4_SchP6F0.3_BS1",
+        "LEARNING_RATE_INIT": 0.0003,
+        "ONSET_LOSS_WEIGHT": 8.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 5.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 1,
+        "RNN_DROPOUT": 0.6,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 6,
+        "SCHEDULER_FACTOR": 0.3
+    },
+     {
+        "run_description": "BS4_on_BestFretV2Run1_H512_L1_OPW5_OLW8_WD1e-4_LR3e-4_SchP6F0.3",
+        "LEARNING_RATE_INIT": 0.0003,
+        "ONSET_LOSS_WEIGHT": 8.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 5.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 1,
+        "RNN_DROPOUT": 0.6,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 6,
+        "SCHEDULER_FACTOR": 0.3
+    },
+    {
+        "run_description": "BS4_AdaptOriginalBS4Params_H512_L1_OPW8_OLW9_WD1e-4_LR3e-4_SchP8F0.3",
+        "LEARNING_RATE_INIT": 0.0003,
+        "ONSET_LOSS_WEIGHT": 9.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 8.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 1,
+        "RNN_DROPOUT": 0.55,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 8,
+        "SCHEDULER_FACTOR": 0.3
+    },
+    {
+        "run_description": "BS4_FretFocus_H512_L2_D0.6_OPW6_OLW8_WD3e-4_LR2e-4_SchP8F0.2",
+        "LEARNING_RATE_INIT": 0.0002,
+        "ONSET_LOSS_WEIGHT": 8.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 6.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 2,
+        "RNN_DROPOUT": 0.6,
+        "WEIGHT_DECAY": 0.0003,
+        "SCHEDULER_PATIENCE": 8,
+        "SCHEDULER_FACTOR": 0.2
+    },
+    {
+        "run_description": "BS4_BestTestOnsetV2Run5Adapted_StdRNN_HyperResp_OPW7_OLW8",
+        "LEARNING_RATE_INIT": 0.0003,
+        "ONSET_LOSS_WEIGHT": 8.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 7.0,
+        "RNN_HIDDEN_SIZE": 768,
+        "RNN_LAYERS": 2,
+        "RNN_DROPOUT": 0.55,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 6,
+        "SCHEDULER_FACTOR": 0.1
+    },
+    {
+        "run_description": "BS4_TinyRNN_OPW5_OLW8_LR2e-4_VHyperResp_P5F0.1_WD1e-4_D0.6",
+        "LEARNING_RATE_INIT": 0.0002,
+        "ONSET_LOSS_WEIGHT": 8.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 5.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 1,
+        "RNN_DROPOUT": 0.6,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 5,
+        "SCHEDULER_FACTOR": 0.1
+    },
+    {
+        "run_description": "BS4_SmallRNN_H512_L1_StrongRegD0.65_WD5e-4_OPW7_OLW9_LR2e-4",
+        "LEARNING_RATE_INIT": 0.0002,
+        "ONSET_LOSS_WEIGHT": 9.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 7.0,
+        "RNN_HIDDEN_SIZE": 512,
+        "RNN_LAYERS": 1,
+        "RNN_DROPOUT": 0.65,
+        "WEIGHT_DECAY": 0.0005,
+        "SCHEDULER_PATIENCE": 8,
+        "SCHEDULER_FACTOR": 0.3
+    }
+]

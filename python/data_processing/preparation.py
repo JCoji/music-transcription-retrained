@@ -1,0 +1,245 @@
+import os
+import jams
+import numpy as np
+import torch
+import librosa
+import mirdata
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+import config
+
+
+def prepare_track_splits(
+    data_home,
+    problematic_files_list,
+    test_split_fraction,
+    validation_split_fraction,
+    seed,
+    output_dir_for_ids=None,
+):
+    try:
+        guitarset_loader = mirdata.initialize("guitarset", data_home=data_home)
+        all_track_ids = guitarset_loader.track_ids
+        print(f"Znaleziono {len(all_track_ids)} wszystkich track_id w GuitarSet.")
+    except Exception as e:
+        print(f"Błąd podczas inicjalizacji mirdata lub pobierania track_ids: {e}")
+        return {"train": [], "validation": [], "test": []}
+
+    filtered_track_ids = [
+        track_id for track_id in all_track_ids
+        if os.path.splitext(os.path.basename(track_id))[0] not in problematic_files_list
+    ]
+    print(f"Liczba track_id po usunięciu problematycznych plików: {len(filtered_track_ids)}")
+
+    track_ids_split_map = {"train": [], "validation": [], "test": []}
+
+    if not filtered_track_ids:
+        print("Brak track_id do przetworzenia po filtracji.")
+        return track_ids_split_map
+
+    train_val_ids, test_ids = train_test_split(
+        filtered_track_ids,
+        test_size=test_split_fraction,
+        random_state=seed,
+        shuffle=True,
+    )
+    track_ids_split_map["test"] = test_ids
+
+    if (1 - test_split_fraction) > 0 and len(train_val_ids) > 0:
+        relative_val_split_size = (
+            validation_split_fraction / (1 - test_split_fraction)
+            if (1 - test_split_fraction) > 0
+            else 0
+        )
+        if relative_val_split_size > 0 and len(train_val_ids) > 1:
+            train_ids, validation_ids = train_test_split(
+                train_val_ids,
+                test_size=relative_val_split_size,
+                random_state=seed,
+                shuffle=True,
+            )
+            track_ids_split_map["train"] = train_ids
+            track_ids_split_map["validation"] = validation_ids
+        elif len(train_val_ids) > 0 :
+            track_ids_split_map["train"] = train_val_ids
+            track_ids_split_map["validation"] = []
+    elif len(train_val_ids) > 0:
+        track_ids_split_map["train"] = train_val_ids
+        track_ids_split_map["validation"] = []
+
+    print("\nPodział na zbiory:")
+    print(f"  Treningowy: {len(track_ids_split_map['train'])} utworów")
+    print(f"  Walidacyjny: {len(track_ids_split_map['validation'])} utworów")
+    print(f"  Testowy: {len(track_ids_split_map['test'])} utworów")
+
+    if output_dir_for_ids:
+        os.makedirs(output_dir_for_ids, exist_ok=True)
+        for split_name, ids in track_ids_split_map.items():
+            split_specific_dir = os.path.join(output_dir_for_ids, split_name)
+            os.makedirs(split_specific_dir, exist_ok=True)
+            with open(
+                os.path.join(output_dir_for_ids, f"{split_name}_ids.txt"), "w"
+            ) as f:
+                for track_id in ids:
+                    f.write(f"{track_id}\n")
+        print(f"\nZapisano listy track_id dla każdego zbioru w katalogu: {output_dir_for_ids}")
+    return track_ids_split_map
+
+def extract_annotations_from_jams(jams_file_path):
+    notes = []
+    jam_data = jams.load(jams_file_path)
+    note_midi_annotations = jam_data.search(namespace="note_midi")
+
+    for annotation_obj in note_midi_annotations:
+        if not (
+            annotation_obj.annotation_metadata
+            and hasattr(annotation_obj.annotation_metadata, "data_source")
+        ):
+            continue
+        string_num = int(annotation_obj.annotation_metadata.data_source)
+        if string_num not in config.OPEN_STRING_PITCHES_JAMS:
+            continue
+
+        open_string_pitch = config.OPEN_STRING_PITCHES_JAMS[string_num]
+        for obs in annotation_obj.data:
+            onset_sec = float(obs.time)
+            duration_sec = float(obs.duration)
+            offset_sec = onset_sec + duration_sec
+            pitch_midi = float(obs.value)
+            fret_num = int(round(pitch_midi - open_string_pitch))
+            if fret_num < 0:
+                fret_num = 0
+            notes.append((onset_sec, offset_sec, string_num, fret_num, pitch_midi))
+
+    notes.sort(key=lambda x: x[0])
+    return notes
+
+def process_single_track(track_object, output_file_base,
+                         target_sr, fft_size, hop_size, num_mel_bands):
+    features_path = f"{output_file_base}_features.pt"
+    labels_path = f"{output_file_base}_labels.pt"
+
+    if os.path.exists(features_path) and os.path.exists(labels_path):
+        return "skipped"
+
+    audio_file_path = None
+    if (
+        hasattr(track_object, "audio_mix_path")
+        and track_object.audio_mix_path
+        and os.path.exists(track_object.audio_mix_path)
+    ):
+        audio_file_path = track_object.audio_mix_path
+    elif (
+        hasattr(track_object, "audio_mic_path")
+        and track_object.audio_mic_path
+        and os.path.exists(track_object.audio_mic_path)
+    ):
+        audio_file_path = track_object.audio_mic_path
+
+    if not audio_file_path:
+        print(f"  Błąd: Brak dostępnego pliku audio dla {track_object.track_id}")
+        return "error"
+
+    try:
+        audio, _ = librosa.load(audio_file_path, sr=target_sr, mono=True)
+        mel_spectrogram = librosa.feature.melspectrogram(
+            y=audio, sr=target_sr, n_fft=fft_size, hop_length=hop_size, n_mels=num_mel_bands
+        )
+        log_mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
+    except Exception as e:
+        print(f"  Błąd podczas przetwarzania audio dla {track_object.track_id}: {e}")
+        return "error"
+
+    if (
+        not hasattr(track_object, "jams_path")
+        or not track_object.jams_path
+        or not os.path.exists(track_object.jams_path)
+    ):
+        print(f"  Błąd: Brak pliku JAMS dla {track_object.track_id}")
+        return "error"
+
+    try:
+        annotations = extract_annotations_from_jams(track_object.jams_path)
+    except Exception as e:
+        print(f"  Błąd podczas ekstrakcji adnotacji JAMS dla {track_object.track_id}: {e}")
+        return "error"
+
+    if not annotations:
+        print(f"  Błąd: Brak adnotacji w pliku JAMS dla {track_object.track_id}")
+        return "error"
+
+    torch.save(
+        torch.tensor(log_mel_spectrogram, dtype=torch.float32), features_path
+    )
+    labels_array = np.array(annotations, dtype=np.float32)
+    torch.save(torch.from_numpy(labels_array), labels_path)
+    return "processed"
+
+def preprocess_guitarset_data(
+    guitarset_data_home,
+    processed_output_base_dir,
+    track_ids_map,
+    audio_sample_rate,
+    audio_n_fft,
+    audio_hop_length,
+    audio_n_mels,
+):
+    print("Rozpoczynanie preprocessingu GuitarSet.")
+    print(f"Katalog danych (guitarset_data_home): {guitarset_data_home}")
+    print(f"Główny katalog wyjściowy (processed_output_base_dir): {processed_output_base_dir}")
+
+    try:
+        guitarset_instance = mirdata.initialize("guitarset", data_home=guitarset_data_home)
+    except Exception as e:
+        print(f"Krytyczny błąd: Nie udało się zainicjalizować GuitarSet. Błąd: {e}")
+        return
+
+    processing_stats = {
+        "train": {"processed": 0, "skipped": 0, "errors": 0},
+        "validation": {"processed": 0, "skipped": 0, "errors": 0},
+        "test": {"processed": 0, "skipped": 0, "errors": 0},
+    }
+
+    for split_type, track_id_list_for_split in track_ids_map.items():
+        if not track_id_list_for_split:
+            print(f"\nBrak utworów do przetworzenia w zbiorze: {split_type}")
+            continue
+
+        print(f"\nPrzetwarzanie zbioru: {split_type} ({len(track_id_list_for_split)} utworów)")
+        current_split_output_dir = os.path.join(processed_output_base_dir, split_type)
+        os.makedirs(current_split_output_dir, exist_ok=True)
+
+        for current_track_id in tqdm(
+            track_id_list_for_split,
+            desc=f"Processing {split_type}",
+            unit="track",
+        ):
+            try:
+                track_data_object = guitarset_instance.track(current_track_id)
+                track_id_filename_base = os.path.splitext(os.path.basename(current_track_id))[0]
+                output_file_path_base = os.path.join(current_split_output_dir, track_id_filename_base)
+
+                status_msg = process_single_track(
+                    track_data_object,
+                    output_file_path_base,
+                    audio_sample_rate,
+                    audio_n_fft,
+                    audio_hop_length,
+                    audio_n_mels,
+                )
+                processing_stats[split_type][status_msg] +=1
+            except Exception as e:
+                print(f"  Nieoczekiwany błąd (poza process_single_track) dla utworu {current_track_id}: {e}")
+                processing_stats[split_type]["errors"] += 1
+        print()
+
+    print("\n--- Podsumowanie preprocessingu ---")
+    total_tracks_for_processing = sum(len(val) for val in track_ids_map.values())
+    print(f"Liczba wszystkich utworów przeznaczonych do przetworzenia (po podziale): {total_tracks_for_processing}")
+    for split_key_name in ["train", "validation", "test"]:
+        if split_key_name in processing_stats:
+            print(f"  Zbiór {split_key_name}:")
+            print(f"    Nowo przetworzono: {processing_stats[split_key_name]['processed']}")
+            print(f"    Pominięto (już istniały): {processing_stats[split_key_name]['skipped']}")
+            print(f"    Błędy: {processing_stats[split_key_name]['errors']}")
+    print(f"Przetworzone dane zostały zapisane w katalogu: {processed_output_base_dir}")
