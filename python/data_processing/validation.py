@@ -121,7 +121,7 @@ def run_full_data_validation(dataset_to_validate, validation_shape_params):
         try:
             current_data_item = dataset_to_validate[item_idx]
             current_track_id = current_data_item.get('track_id', f"unknown_track_idx_{item_idx}")
-            if hasattr(dataset_to_validate, 'get_track_id_for_item'):  # Używamy nowej nazwy metody
+            if hasattr(dataset_to_validate, 'get_track_id_for_item'):
                 current_track_id = dataset_to_validate.get_track_id_for_item(item_idx)
             elif hasattr(dataset_to_validate, 'base_track_ids') and item_idx < len(dataset_to_validate.base_track_ids):
                 current_track_id = dataset_to_validate.base_track_ids[item_idx]

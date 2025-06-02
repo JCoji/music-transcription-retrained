@@ -67,6 +67,7 @@ def prepare_track_splits(
         track_ids_split_map["train"] = train_val_ids
         track_ids_split_map["validation"] = []
 
+
     print("\nPodział na zbiory:")
     print(f"  Treningowy: {len(track_ids_split_map['train'])} utworów")
     print(f"  Walidacyjny: {len(track_ids_split_map['validation'])} utworów")
@@ -232,6 +233,7 @@ def preprocess_guitarset_data(
                 print(f"  Nieoczekiwany błąd (poza process_single_track) dla utworu {current_track_id}: {e}")
                 processing_stats[split_type]["errors"] += 1
         print()
+
 
     print("\n--- Podsumowanie preprocessingu ---")
     total_tracks_for_processing = sum(len(val) for val in track_ids_map.values())

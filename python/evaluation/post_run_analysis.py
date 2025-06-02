@@ -1,8 +1,6 @@
 import os
-
 import mirdata
 import torch
-
 from evaluation import tablature_export, midi_export
 from model.architecture import GuitarTabCRNN, TabCNN
 from model.utils import load_best_model
@@ -22,7 +20,7 @@ def visualize_best_model_outputs(
         print("Zbiór testowy (test_dataset) nie jest dostępny lub jest pusty. Pomijam wizualizację.")
         return
 
-    if not sorted_completed_runs_list: # Sprawdzenie czy lista nie jest pusta
+    if not sorted_completed_runs_list:
         print("Brak ukończonych przebiegów w `sorted_completed_runs_list`. Nie można wybrać najlepszego modelu.")
         return
 
@@ -41,7 +39,6 @@ def visualize_best_model_outputs(
     print(f"  Używane hiperparametry: {best_run_params_combo}")
     print(f"  Optymalny próg onsetów (ramkowy) z walidacji: {best_run_optimal_threshold:.2f}")
 
-    calculated_cnn_out_dim_best_model = None
     try:
         temp_cnn_model = TabCNN(
             input_channels=config_obj.CNN_INPUT_CHANNELS,
@@ -59,7 +56,7 @@ def visualize_best_model_outputs(
         del temp_cnn_model, dummy_cnn_input, dummy_cnn_output
     except Exception as e_cnn_viz:
         print(f"Błąd podczas obliczania wymiaru CNN dla najlepszego modelu: {e_cnn_viz}. Pomijam wizualizację.")
-        return # Zakończ funkcję, jeśli nie można obliczyć wymiaru
+        return
 
     model_init_params_for_load = {
         'num_frames_rnn_input_dim': calculated_cnn_out_dim_best_model,
@@ -137,51 +134,8 @@ def visualize_best_model_outputs(
         max_fret_val=config_obj.MAX_FRETS,
         output_directory_path=visualization_output_dir
     )
-    print(f"Zakończono generowanie plików tabulatur tekstowych.")
+    print(f"Zakończono generowanie plików tabulatur tekstowych i podsumowania dopasowania.")
 
-    print("\n\n--- Porównanie Tabulatur (Ground Truth vs. Predykcja) ---")
-    for sample_idx_viz in sample_indices_for_viz:
-        base_track_id_viz = f"sample_{sample_idx_viz}" # Domyślne ID
-        # Spróbuj uzyskać lepsze ID, jeśli dataset je dostarcza
-        if hasattr(test_dataset_instance, 'base_track_ids') and \
-           test_dataset_instance.base_track_ids and \
-           sample_idx_viz < len(test_dataset_instance.base_track_ids):
-            base_track_id_viz = test_dataset_instance.base_track_ids[sample_idx_viz]
-        elif hasattr(test_dataset_instance, 'get_full_track_id_for_item'):
-            try:
-                full_id = test_dataset_instance.get_full_track_id_for_item(sample_idx_viz)
-                base_track_id_viz = os.path.splitext(os.path.basename(full_id))[0]
-            except: pass
-
-
-        print(f"\n\n--- Utwór: {base_track_id_viz} (Indeks próbki w zbiorze testowym: {sample_idx_viz}) ---")
-
-        gt_tab_filename = f"{base_track_id_viz}{config_obj.TAB_GT_FILENAME_SUFFIX}"
-        gt_tab_filepath = os.path.join(visualization_output_dir, gt_tab_filename)
-        print(f"\n--- Ground Truth Tabulatura ({gt_tab_filename}) ---")
-        if os.path.exists(gt_tab_filepath):
-            with open(gt_tab_filepath, "r", encoding="utf-8") as f_gt_tab:
-                print(f_gt_tab.read())
-        else:
-            print(f"Nie znaleziono pliku: {gt_tab_filepath}")
-
-        # Poprawne formatowanie nazwy pliku predykcji
-        formatted_threshold_str = f"{best_run_optimal_threshold:.2f}"
-        # Użyj szablonu z obiektu config
-        pred_tab_filename_template = config_obj.TAB_PRED_FILENAME_SUFFIX_TEMPLATE
-        if "{threshold:.2f}" in pred_tab_filename_template:
-            pred_tab_filename = f"{base_track_id_viz}{pred_tab_filename_template.replace('{threshold:.2f}', formatted_threshold_str)}"
-        else: # Zapasowa logika, jeśli szablon jest inny
-            pred_tab_filename = f"{base_track_id_viz}_tab_pred_thresh{formatted_threshold_str}.txt" # Dostosuj, jeśli potrzeba
-
-
-        pred_tab_filepath = os.path.join(visualization_output_dir, pred_tab_filename)
-        print(f"\n--- Predykowana Tabulatura ({pred_tab_filename}, Próg: {best_run_optimal_threshold:.2f}) ---")
-        if os.path.exists(pred_tab_filepath):
-            with open(pred_tab_filepath, "r", encoding="utf-8") as f_pred_tab:
-                print(f_pred_tab.read())
-        else:
-            print(f"Nie znaleziono pliku: {pred_tab_filepath}")
-        print("-" * 80)
-
+    print("\n--- Wizualizacje (pliki MIDI i TXT) zostały zapisane. Podsumowanie dopasowania tabulatur wyświetlono powyżej. ---")
+    print(f"--- Sprawdź katalog: {visualization_output_dir} ---")
     print("\n--- Zakończono Wizualizację Wyników ---")

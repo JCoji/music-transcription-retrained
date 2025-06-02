@@ -22,6 +22,7 @@ VALIDATION_SPLIT_SIZE = 0.1
 TEST_SPLIT_SIZE = 0.1
 RANDOM_SEED = 42
 CLEAR_CONSOLE_EVERY_N_RUNS = 10
+NUM_SAMPLES_TO_VISUALIZE_FROM_TEST = 5
 
 # --- Domyślne Parametry Datasetu (dla GuitarSetTabDataset) ---
 DATASET_COMMON_PARAMS = {
@@ -35,15 +36,15 @@ DATASET_COMMON_PARAMS = {
 # --- Domyślne Parametry Augmentacji (dla GuitarSetTabDataset, split 'train') ---
 DATASET_TRAIN_AUGMENTATION_PARAMS = {
     "enable_audio_augmentations": True,
-    "aug_p_time_stretch": 0.5,
-    "aug_time_stretch_limits": (0.85, 1.15),
-    "aug_p_add_noise": 0.5,
-    "aug_noise_level_limits": (0.0005, 0.005),
-    "aug_p_random_gain": 0.5,
-    "aug_gain_limits": (0.7, 1.3),
+    "aug_p_time_stretch": 0.6,
+    "aug_time_stretch_limits": [0.8, 1.2],
+    "aug_p_add_noise": 0.7,
+    "aug_noise_level_limits": [0.001, 0.01],
+    "aug_p_random_gain": 0.7,
+    "aug_gain_limits": [0.6, 1.4],
     "enable_specaugment": True,
-    "specaug_time_mask_max_p": 0.1,
-    "specaug_freq_mask_max_p": 0.15,
+    "specaug_time_mask_param": 30,
+    "specaug_freq_mask_param": 15
 }
 
 DATASET_EVAL_AUGMENTATION_PARAMS = {
@@ -104,8 +105,10 @@ TAB_GT_FILENAME_SUFFIX = "_tablature_ground_truth.txt"
 TAB_PRED_FILENAME_SUFFIX_TEMPLATE = "_tablature_prediction_thresh{threshold:.2f}.txt"
 
 # --- Domyślne Parametry Treningu ---
-NUM_EPOCHS_DEFAULT = 1
-BATCH_SIZE_DEFAULT = 1
+NUM_EPOCHS_DEFAULT = 300
+
+BATCH_SIZE_DEFAULT = 2 # ZMIEŃ NA 8
+
 FRET_LOSS_WEIGHT_DEFAULT = 1.0
-EARLY_STOPPING_PATIENCE_DEFAULT = 10
+EARLY_STOPPING_PATIENCE_DEFAULT = 25
 CHECKPOINT_METRIC_DEFAULT = 'val_tdr_f1'

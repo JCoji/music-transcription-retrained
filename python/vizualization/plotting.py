@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import librosa
-import librosa.display
 import numpy as np
 import torch
 import config
@@ -145,7 +144,7 @@ def plot_sample_data_summary(
         ax=axs[2]
     )
 
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Dostosowanie, aby tytuł główny się zmieścił
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
     plt.close(fig)
 
@@ -158,10 +157,10 @@ def plot_predictions_vs_ground_truth(
         fret_pred_logits_sample,
         sr,
         hop_length,
-        max_frets_val,  # Zmieniona nazwa, aby uniknąć konfliktu z modułem config
+        max_frets_val,
         onset_threshold_val=config.DEFAULT_ONSET_THRESHOLD,
         num_strings_val=config.DEFAULT_NUM_STRINGS,
-        figure_size=(15, 12),  # Zmniejszono domyślny rozmiar
+        figure_size=(15, 12),
         base_track_id=None,
         output_save_path=None,
 ):
@@ -175,7 +174,6 @@ def plot_predictions_vs_ground_truth(
         title_str = f"{title_str} (Utwór: {base_track_id})"
     fig_obj.suptitle(title_str, fontsize=16)
 
-    # Używamy max_frets_val przekazanego do funkcji
     max_fret_to_display = max_frets_val + config.FRET_SILENCE_CLASS_OFFSET
 
     plot_spectrogram(features_sample, sr=sr, hop_length=hop_length, ax=axs_array[0], title="Mel-Spektrogram")
@@ -199,7 +197,7 @@ def plot_predictions_vs_ground_truth(
 
 
 def plot_training_history(
-        history_data, output_save_path=None, figure_size=(20, 28)  # Zwiększono wysokość
+        history_data, output_save_path=None, figure_size=(20, 28)
 ):
     if not history_data or not history_data.get("train_total_loss"):
         print("Historia treningu jest pusta lub niekompletna. Wykres nie zostanie wygenerowany.")
@@ -212,11 +210,9 @@ def plot_training_history(
 
     epochs_range_list = range(1, num_epochs_completed + 1)
 
-    # Zwiększamy liczbę wierszy dla nowych metryk
-    fig_obj, axs_array = plt.subplots(6, 2, figsize=figure_size)  # 6 wierszy, 2 kolumny
+    fig_obj, axs_array = plt.subplots(6, 2, figsize=figure_size)
     fig_obj.suptitle("Historia Treningu Modelu", fontsize=18)
 
-    # --- Straty ---
     ax = axs_array[0, 0]
     if history_data.get("train_total_loss"):
         ax.plot(epochs_range_list, history_data["train_total_loss"], "o-", label="Train Total Loss")
@@ -243,7 +239,6 @@ def plot_training_history(
     ax.grid(True)
     ax.legend()
 
-    # --- Metryki Onsetów (mir_eval) ---
     ax = axs_array[1, 0]
     if history_data.get("val_onset_f1_mir_eval"):
         ax.plot(epochs_range_list, history_data["val_onset_f1_mir_eval"], "o-", label="Val Onset F1 (mir_eval)")
@@ -260,7 +255,6 @@ def plot_training_history(
     ax.legend()
     ax.set_ylim(0, 1.05)
 
-    # --- Metryki Onsetów (Ramkowe, przy optymalnym progu z epoki) ---
     ax = axs_array[1, 1]
     if history_data.get("val_onset_f1_optimal_thresh_frame"):
         ax.plot(epochs_range_list, history_data["val_onset_f1_optimal_thresh_frame"], "o-",
@@ -278,7 +272,6 @@ def plot_training_history(
     ax.legend(loc='upper left')
     ax.set_ylim(0, 1.05)
 
-    # --- Metryka FTab ---
     ax = axs_array[2, 0]
     if history_data.get("val_ftab"):
         ax.plot(epochs_range_list, history_data["val_ftab"], "o-", label="Val FTab")
@@ -289,9 +282,8 @@ def plot_training_history(
     ax.legend()
     ax.set_ylim(0, 1.05)
 
-    # --- Metryki TDR ---
     ax = axs_array[2, 1]
-    if history_data.get("val_tdr_recall"):  # TDR to Recall
+    if history_data.get("val_tdr_recall"):
         ax.plot(epochs_range_list, history_data["val_tdr_recall"], "o-", label="Val TDR (Recall)")
     if history_data.get("val_tdr_precision"):
         ax.plot(epochs_range_list, history_data["val_tdr_precision"], "s-", label="Val TDR P", alpha=0.7)
@@ -304,9 +296,8 @@ def plot_training_history(
     ax.legend()
     ax.set_ylim(0, 1.05)
 
-    # --- Metryki Progów (Ramkowe, fret_accuracy_active) ---
     ax = axs_array[3, 0]
-    if history_data.get("fret_accuracy_active"):  # Zmieniono z val_fret_accuracy_active jeśli tak jest w historii
+    if history_data.get("fret_accuracy_active"):
         ax.plot(epochs_range_list, history_data["fret_accuracy_active"], "o-", label="Val Fret Acc (Active Frames)")
     if history_data.get("fret_accuracy_overall"):
         ax.plot(epochs_range_list, history_data["fret_accuracy_overall"], "s-", label="Val Fret Acc (Overall)",
@@ -318,7 +309,6 @@ def plot_training_history(
     ax.legend();
     ax.set_ylim(0, 1.05)
 
-    # --- Współczynnik Uczenia ---
     ax = axs_array[3, 1]
     if history_data.get("lr"):
         ax.plot(epochs_range_list, history_data["lr"], "o-", label="Learning Rate", color="purple")
@@ -329,13 +319,12 @@ def plot_training_history(
     ax.grid(True)
     ax.legend()
 
-    # Puste miejsce na przyszłe wykresy lub można zmniejszyć liczbę wierszy
     axs_array[4, 0].axis('off')
     axs_array[4, 1].axis('off')
     axs_array[5, 0].axis('off')
     axs_array[5, 1].axis('off')
 
-    plt.tight_layout(rect=[0, 0, 1, 0.97])  # Dostosowanie dla suptitle
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
     if output_save_path:
         try:
             plt.savefig(output_save_path)

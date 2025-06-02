@@ -1,16 +1,10 @@
 import os
 import torch
-import shutil  # Do kopiowania plików WAV
-import mirdata  # Do ładowania GuitarSet dla ścieżek audio
+import shutil
+import mirdata
 import config
-from training import note_conversion_utils  # Import naszej funkcji
-
-try:
-    import pretty_midi
-
-    PRETTY_MIDI_AVAILABLE = True
-except ImportError:
-    PRETTY_MIDI_AVAILABLE = False
+from training import note_conversion_utils
+import pretty_midi
 
 
 def generate_midi_from_predictions(
@@ -26,10 +20,6 @@ def generate_midi_from_predictions(
         guitarset_data_home,
         guitarset_loader=None
 ):
-    if not PRETTY_MIDI_AVAILABLE:
-        print("Biblioteka pretty_midi nie jest dostępna. Pomijam generowanie plików MIDI.")
-        return
-
     os.makedirs(midi_output_directory, exist_ok=True)
 
     if guitarset_loader is None and guitarset_data_home:
@@ -46,12 +36,9 @@ def generate_midi_from_predictions(
                     f"Ostrzeżenie: Indeks próbki {sample_idx} poza zakresem datasetu ({len(dataset_instance)}). Pomijam.")
                 continue
 
-            # Zakładamy, że dataset __getitem__ zwraca: features, (onset_targets, fret_targets), raw_labels
-            # Dla generowania MIDI potrzebujemy tylko features.
-            # Jeśli dataset zwraca inaczej, trzeba to dostosować.
             try:
-                features_sample, _, _ = dataset_instance[sample_idx]  # Pobieramy tylko cechy
-            except TypeError:  # Jeśli dataset zwraca tylko (features, labels_tuple)
+                features_sample, _, _ = dataset_instance[sample_idx]
+            except TypeError:
                 features_sample, _ = dataset_instance[sample_idx]
             except Exception as e_get:
                 print(f"Błąd podczas pobierania próbki {sample_idx} z datasetu: {e_get}. Pomijam.")
@@ -61,11 +48,11 @@ def generate_midi_from_predictions(
             if hasattr(dataset_instance, 'base_track_ids') and dataset_instance.base_track_ids and sample_idx < len(
                     dataset_instance.base_track_ids):
                 base_track_id_str = dataset_instance.base_track_ids[sample_idx]
-            elif hasattr(dataset_instance, 'get_full_track_id_for_item'):  # Alternatywa, jeśli dataset ma tę metodę
+            elif hasattr(dataset_instance, 'get_full_track_id_for_item'):
                 try:
                     full_id = dataset_instance.get_full_track_id_for_item(sample_idx)
                     base_track_id_str = os.path.splitext(os.path.basename(full_id))[0]
-                except:  # Leniwa obsługa błędu
+                except:
                     pass
 
             features_sample_dev = features_sample.unsqueeze(0).to(device_to_use)
@@ -75,6 +62,7 @@ def generate_midi_from_predictions(
             onset_pred_binary_frames = (onset_pred_probs > onset_threshold_optimal).float()
             fret_pred_indices_frames = torch.argmax(fret_pred_logits.squeeze(0).cpu(), dim=-1)
 
+            # POPRAWIONE WYWOŁANIE: Usunięto argument 'midi_velocity'
             predicted_notes_info_list = note_conversion_utils.frames_to_notes_for_eval(
                 onset_preds_binary_frames=onset_pred_binary_frames,
                 fret_pred_indices_frames=fret_pred_indices_frames,
@@ -82,7 +70,6 @@ def generate_midi_from_predictions(
                 audio_sample_rate=sampling_rate,
                 max_fret_value=max_fret_value,
                 min_note_duration_frames=config.MIN_NOTE_DURATION_FRAMES,
-                midi_velocity=config.DEFAULT_MIDI_VELOCITY,
                 open_string_pitches=config.OPEN_STRING_PITCHES_MIDI
             )
 
@@ -91,9 +78,8 @@ def generate_midi_from_predictions(
                 guitar_instrument_obj = pretty_midi.Instrument(program=config.ACOUSTIC_GUITAR_STEEL_PROGRAM)
 
                 for note_data in predicted_notes_info_list:
-                    # frames_to_notes_for_eval zwraca słownik, tworzymy z niego obiekt Note
                     midi_note = pretty_midi.Note(
-                        velocity=config.DEFAULT_MIDI_VELOCITY,  # Można też pobrać z note_data, jeśli tam jest
+                        velocity=config.DEFAULT_MIDI_VELOCITY,
                         pitch=note_data['pitch_midi'],
                         start=note_data['start_time'],
                         end=note_data['end_time']

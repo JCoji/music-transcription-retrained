@@ -1,13 +1,5 @@
 import config
 
-try:
-    import pretty_midi
-
-    PRETTY_MIDI_AVAILABLE_FOR_CONVERSION = True
-except ImportError:
-    PRETTY_MIDI_AVAILABLE_FOR_CONVERSION = False
-
-
 def frames_to_notes_for_eval(
         onset_preds_binary_frames,
         fret_pred_indices_frames,
@@ -24,7 +16,6 @@ def frames_to_notes_for_eval(
     time_per_frame = frame_hop_length / audio_sample_rate
     predicted_notes_list = []
 
-    # Indeks klasy ciszy dla progów (zakładamy, że jest to max_fret_value + offset)
     silence_fret_class_idx = max_fret_value + config.FRET_SILENCE_CLASS_OFFSET
 
     for string_idx in range(num_strings):
@@ -33,55 +24,48 @@ def frames_to_notes_for_eval(
 
         for frame_idx in range(num_frames):
             is_onset_active = onset_preds_binary_frames[
-                                  frame_idx, string_idx].item() > 0.5  # Upewniamy się, że to bool/0-1
+                                  frame_idx, string_idx].item() > 0.5
             current_fret_val = fret_pred_indices_frames[frame_idx, string_idx].item()
 
             note_should_terminate = False
             if active_note_start_frame is not None:
                 if is_onset_active and frame_idx > active_note_start_frame:
                     note_should_terminate = True
-                elif current_fret_val == silence_fret_class_idx:  # Zakończ, jeśli predykcja to cisza
+                elif current_fret_val == silence_fret_class_idx:
                     note_should_terminate = True
-                elif current_fret_val != active_note_fret_val:  # Zakończ, jeśli próg się zmienił
+                elif current_fret_val != active_note_fret_val:
                     note_should_terminate = True
-                elif frame_idx == num_frames - 1:  # Koniec sekwencji
+                elif frame_idx == num_frames - 1:
                     note_should_terminate = True
 
                 if note_should_terminate:
                     start_time_sec = active_note_start_frame * time_per_frame
-                    # Zakończenie nuty jest na początku bieżącej ramki, która powoduje zakończenie
                     end_time_sec = frame_idx * time_per_frame
-
                     duration_in_frames = frame_idx - active_note_start_frame
 
                     if duration_in_frames >= min_note_duration_frames and active_note_fret_val != silence_fret_class_idx:
-                        # Upewniamy się, że active_note_fret_val jest w zakresie 0..max_fret_value
                         if 0 <= active_note_fret_val <= max_fret_value:
                             pitch_midi_val = open_string_pitches[string_idx] + active_note_fret_val
-
-                            # Zwracamy słownik zamiast obiektu PrettyMIDI dla łatwiejszego użycia w mir_eval
                             predicted_notes_list.append({
                                 'start_time': start_time_sec,
                                 'end_time': end_time_sec,
                                 'pitch_midi': int(round(pitch_midi_val)),
                                 'string': string_idx,
-                                'fret': int(active_note_fret_val)  # Dodajemy informację o progu
+                                'fret': int(active_note_fret_val)
                             })
                     active_note_start_frame = None
                     active_note_fret_val = None
 
             if is_onset_active and current_fret_val != silence_fret_class_idx:
-                # Jeśli poprzednia nuta nie została zakończona, a tu jest nowy onset, to ją zakończ (defensywnie)
                 if active_note_start_frame is not None and frame_idx > active_note_start_frame:
-                    # Ten blok jest defensywny, normalnie note_should_terminate powinien to obsłużyć
-                    pass  # Już obsłużone powyżej
+                    pass
 
                 active_note_start_frame = frame_idx
                 active_note_fret_val = current_fret_val
 
-        if active_note_start_frame is not None:  # Obsługa ostatniej nuty w sekwencji
+        if active_note_start_frame is not None:
             start_time_sec = active_note_start_frame * time_per_frame
-            end_time_sec = num_frames * time_per_frame  # Nuta trwa do końca sekwencji
+            end_time_sec = num_frames * time_per_frame
             duration_in_frames = num_frames - active_note_start_frame
             if duration_in_frames >= min_note_duration_frames and active_note_fret_val != silence_fret_class_idx:
                 if 0 <= active_note_fret_val <= max_fret_value:
