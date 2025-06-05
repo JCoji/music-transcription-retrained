@@ -1,21 +1,12 @@
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                             %
-% MOJE PAKIETY, USTAWIENIA ITD                %
-%                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Tutaj proszę umieszczać swoje pakiety, makra, ustawienia itd.
-
-
- 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% listingi i fragmentu kodu źródłowego 
+% listingi i fragmentu kodu źródłowego
 % pakiet: listings lub minted
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 % biblioteka listings
 \usepackage{listings}
+% \usepackage{float} % Było zakomentowane, odkomentowujemy dla opcji [H]
 \lstset{%
 morekeywords={string,exception,std,vector},% słowa kluczowe rozpoznawane przez pakiet listings
 language=C++,% C, Matlab, Python, SQL, TeX, XML, bash, ... – vide https://www.ctan.org/pkg/listings
@@ -32,7 +23,9 @@ breaklines=true,%
 escapeinside={@*}{*@},%
 }
 
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%
 % pakiet minted
 %\usepackage{minted}
 
@@ -41,7 +34,7 @@ escapeinside={@*}{*@},%
 % xelatex  -shell-escape main.tex
 
 %\usepackage[chapter]{minted} % [section]
-%%\usemintedstyle{bw}   % czarno-białe kody 
+%%\usemintedstyle{bw}   % czarno-białe kody
 %
 %\setminted % https://ctan.org/pkg/minted
 %{
@@ -57,12 +50,34 @@ escapeinside={@*}{*@},%
 %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dodano pakiet longtable dla tabel wielostronicowych
+\usepackage{longtable}
 
+% OPCJONALNIE: Pakiet float dla lepszej kontroli nad pozycjonowaniem obiektów pływających (opcja [H])
+% Odkomentowujemy, aby opcja [H] dla rysunków działała poprawnie
+\usepackage{float}
 
+% Dodano pakiet microtype dla lepszego łamania tekstu i justowania
+\usepackage{microtype}
 
+% Zapobieganie rozciąganiu pionowych odstępów w celu wypełnienia strony
+% Strony będą miały wyrównanie do góry, dolna krawędź może być nierówna.
+\raggedbottom
+
+% OPCJONALNIE: Zwiększenie kar za "wdowy" i "sieroty"
+% Może pomóc w zmianie sposobu łamania stron, co czasami rozwiązuje problemy z odstępami.
+% Możesz to odkomentować, jeśli \raggedbottom samo w sobie nie wystarczy lub jeśli
+% chcesz unikać \raggedbottom i szukać innego rozwiązania.
+% \clubpenalty=10000 % Kara za "sierotę" (pierwsza linia akapitu na końcu strony)
+% \widowpenalty=10000 % Kara za "wdowę" (ostatnia linia akapitu na początku strony)
+% \displaywidowpenalty=10000 % Kara za "wdowę" przed formułą matematyczną
+
+% OPCJONALNIE: Pakiet enumitem dla lepszej kontroli nad odstępami w listach
+% Jeśli odstępy w listach itemize/enumerate są zbyt duże, można odkomentować:
+% \usepackage{enumitem}
+% Przykłady konfiguracji (umieścić PO \usepackage{enumitem}):
+% \setlist[itemize]{noitemsep} % usuwa odstępy między elementami listy, zachowuje odstęp przed/po liście
+% \setlist[itemize]{nosep} % usuwa większość pionowych odstępów w listach itemize
+% lub bardziej szczegółowo:
+% \setlist[itemize,1]{topsep=5pt, partopsep=2pt, itemsep=2pt, parsep=2pt} % dla pierwszego poziomu zagnieżdżenia
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                             %
-% KONIEC MOICH USTAWIEŃ                       %
-%                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
