@@ -1,59 +1,240 @@
-\chapter{[Tytuł rozdziału]} 
+\chapter{Przedmiot Pracy: Projekt i Implementacja Systemu Transkrypcji Gitarowej}
+\label{chap:przedmiot_pracy}
+Niniejszy rozdział stanowi szczegółowe omówienie projektu i implementacji autorskiego systemu do automatycznej transkrypcji polifonicznych nagrań gitarowych na zapis tabulaturowy (GTT). Celem prac było stworzenie oraz ewaluacja systemu zdolnego do przekształcania sygnału audio gitary w symboliczną reprezentację tabulaturową, z wykorzystaniem technik głębokiego uczenia. Kluczowym aspektem projektu jest możliwość eksperymentalnego porównania dwóch odmiennych metod reprezentacji sygnału wejściowego: tradycyjnych mel-spektrogramów oraz transformaty Constant-Q (CQT), celem zbadania ich efektywności w zadaniu GTT. Opierając się na fundamentach teoretycznych i przeglądzie stanu wiedzy przedstawionym w poprzednich rozdziałach, w tej części pracy opisana zostanie architektura i logika działania opracowanego rozwiązania. Prezentacja ta ma na celu nie tylko techniczny opis zrealizowanych prac, ale również analityczne osadzenie podjętych decyzji projektowych w kontekście literatury naukowej.
 
-%%%%%%%%%%%%%%%%%%%%%
-%% RYSUNEK Z PLIKU
-%
-%\begin{figure}
-%\centering
-%\includegraphics[width=0.5\textwidth]{./graf/politechnika_sl_logo_bw_pion_pl.pdf}
-%\caption{Podpis rysunku zawsze pod rysunkiem.}
-%\label{fig:etykieta-rysunku}
-%\end{figure}
-%Rys. \ref{fig:etykieta-rysunku} przestawia …
-%%%%%%%%%%%%%%%%%%%%%
-%
-%%%%%%%%%%%%%%%%%%%%%
-%% WIELE RYSUNKÓW 
-%
-%\begin{figure}
-%\centering
-%\begin{subfigure}{0.4\textwidth}
-%    \includegraphics[width=\textwidth]{./graf/politechnika_sl_logo_bw_pion_pl.pdf}
-%    \caption{Lewy górny rysunek.}
-%    \label{fig:lewy-gorny}
-%\end{subfigure}
-%\hfill
-%\begin{subfigure}{0.4\textwidth}
-%    \includegraphics[width=\textwidth]{./graf/politechnika_sl_logo_bw_pion_pl.pdf}
-%    \caption{Prawy górny rysunek.}
-%    \label{fig:prawy-gorny}
-%\end{subfigure}
-%
-%\begin{subfigure}{0.4\textwidth}
-%    \includegraphics[width=\textwidth]{./graf/politechnika_sl_logo_bw_pion_pl.pdf}
-%    \caption{Lewy dolny rysunek.}
-%    \label{fig:lewy-dolny}
-%\end{subfigure}
-%\hfill
-%\begin{subfigure}{0.4\textwidth}
-%    \includegraphics[width=\textwidth]{./graf/politechnika_sl_logo_bw_pion_pl.pdf}
-%    \caption{Prawy dolny rysunek.}
-%    \label{fig:prawy-dolny}
-%\end{subfigure}
-%        
-%\caption{Wspólny podpis kilku rysunków.}
-%\label{fig:wiele-rysunkow}
-%\end{figure}
-%Rys. \ref{fig:wiele-rysunkow} przestawia wiele ważnych informacji, np. rys. \ref{fig:prawy-gorny} jest na prawo u góry.
-%%%%%%%%%%%%%%%%%%%%%
+\section{Opis Zaimplementowanego Rozwiązania}
+\label{sec:rozwiazanie_dyplomanta}
+W tej sekcji przedstawiono szczegółowy opis systemu GTT zaimplementowanego w ramach niniejszej pracy. Opis koncentruje się na funkcjonalności poszczególnych komponentów systemu, począwszy od przygotowania danych, poprzez architekturę modelu, aż po proces treningu i ewaluacji.
 
-%\chapter{[Przedmiot pracy]}
-%
-%\begin{itemize}
-%\item  Jak ja rozwiązuję problem?
-%\begin{itemize}
-%\item rozwiązanie zaproponowane przez dyplomanta
-%\item analiza teoretyczna rozwiązania
-%\item uzasadnienie wyboru zastosowanych metod, algorytmów, narzędzi
-%\end{itemize}
-%\end{itemize}
+\subsection{Architektura Ogólna Systemu}
+\label{ssec:architektura_ogolna}
+Zaproponowany system GTT charakteryzuje się modułową architekturą potokową (\english{pipeline}), co umożliwia elastyczne zarządzanie poszczególnymi etapami przetwarzania oraz systematyczne prowadzenie eksperymentów. Główny skrypt sterujący, zrealizowany w formie interaktywnego notatnika, pełni rolę centrum zarządzania całym projektem, orkiestrując proces od przygotowania danych, przez trening modelu z przeszukiwaniem hiperparametrów, aż po ewaluację i wizualizację wyników.
+Centralnym elementem systemu jest mechanizm konfiguracyjny, który agreguje wszystkie globalne stałe i parametry. Obejmują one definicje ścieżek dostępu do danych wejściowych, przetworzonych oraz wyników, parametry przetwarzania sygnału audio (takie jak częstotliwość próbkowania, długość kroku analizy), specyficzne ustawienia dla generowania mel-spektrogramów (rozmiar okna FFT, liczba pasm Mel) oraz dla transformaty CQT (minimalna częstotliwość, liczba prążków, liczba prążków na oktawę). Ponadto, konfiguracja zawiera parametry dotyczące tworzenia zbiorów danych, w tym ustawienia augmentacji, oczekiwane wymiary tensorów dla celów walidacyjnych, domyślne ustawienia architektury modelu (np. liczba kanałów wyjściowych w warstwach splotowych) oraz parametry procesu treningu (np. domyślna liczba epok, rozmiar wsadu, metryka wyboru najlepszego modelu) i generowania plików wynikowych w formatach MIDI i tabulatur tekstowych. Taka centralizacja parametrów ułatwia ich modyfikację i zapewnia spójność w całym systemie.
+
+\subsection{Przetwarzanie Wstępne i Przygotowanie Danych}
+\label{ssec:przetwarzanie_wstepne_dane}
+Staranne przygotowanie danych jest fundamentalnym etapem w procesie uczenia maszynowego. W ramach systemu obejmuje ono podział zbioru danych, ekstrakcję cech akustycznych z plików audio, przetwarzanie adnotacji oraz zapis przetworzonych danych w formacie tensorów.
+
+\subsubsection{Podział Zbioru Danych}
+\label{sssec:podzial_zbioru}
+System wykorzystuje publicznie dostępny zbiór danych GuitarSet \autocite{Wiggins2019TabCNN}, który zawiera nagrania gitarowe wraz z precyzyjnymi adnotacjami. Proces podziału zbioru na części treningową, walidacyjną i testową jest zautomatyzowany. Na początku, z ogólnej listy utworów eliminowane są te, które zostały zidentyfikowane jako problematyczne (zdefiniowane w centralnej konfiguracji). Następnie, przy użyciu standardowych narzędzi do selekcji modeli, identyfikatory utworów są dzielone na trzy zbiory z zachowaniem określonych proporcji i z wykorzystaniem stałego zarodka losowości, co gwarantuje powtarzalność podziału. Wynikowe listy identyfikatorów dla każdego zbioru są zapisywane do plików tekstowych, które są następnie wykorzystywane przez komponent ładujący dane.
+
+\subsubsection{Ekstrakcja Cech Akustycznych i Przetwarzanie Adnotacji}
+\label{sssec:ekstrakcja_cech_audio_adnotacje}
+System umożliwia ekstrakcję dwóch typów cech czasowo-częstotliwościowych: mel-spektrogramów oraz spektrogramów Constant-Q (CQT).
+Dla potoku opartego na mel-spektrogramach, proces przetwarzania pojedynczego utworu obejmuje wczytanie pliku audio z docelową częstotliwością próbkowania (np. 22050 Hz) przy użyciu biblioteki Librosa \autocite{McFee2022Librosa}. Następnie obliczany jest log-mel-spektrogram poprzez zastosowanie krótkoczasowej transformaty Fouriera (STFT) z określonym rozmiarem okna i krokiem, a następnie projekcję na skalę Mel i konwersję na skalę decybelową. Liczba pasm Mel jest parametrem konfiguracyjnym (np. 128).
+Równolegle przetwarzane są adnotacje dla danego utworu, dostarczane w formacie JAMS. Z pliku JAMS ekstrahowane są informacje o poszczególnych nutach: czas rozpoczęcia, czas trwania oraz wysokość dźwięku MIDI. Na podstawie wysokości dźwięku MIDI i standardowego strojenia gitary obliczany jest również numer progu dla każdej struny.
+Zarówno wyekstrahowany mel-spektrogram, jak i przetworzone adnotacje są następnie zapisywane jako dwa osobne pliki binarne zawierające tensory, gotowe do dalszego wykorzystania. Ten proces jest powtarzany dla wszystkich utworów w poszczególnych podziałach zbioru danych.
+Alternatywna ścieżka, wykorzystująca transformate Constant-Q (CQT), jest realizowana w locie przez komponent zbioru danych, co zostanie opisane w kolejnej sekcji.
+
+\subsubsection{Komponent Zbioru Danych i Augmentacja}
+\label{sssec:komponent_zbioru_danych_augmentacja}
+Dedykowany komponent zbioru danych, zgodny ze standardowym interfejsem frameworka PyTorch, odpowiada za ładowanie i przygotowywanie danych dla modelu. Jego kluczową cechą jest elastyczność pozwalająca na obsługę dwóch scenariuszy ekstrakcji cech:
+\begin{itemize}
+\item Wczytywanie wstępnie przetworzonych mel-spektrogramów z plików tensorowych (głównie dla zbiorów walidacyjnego i testowego).
+\item Generowanie spektrogramów CQT w locie z surowych plików audio (głównie dla zbioru treningowego, co umożliwia efektywne stosowanie augmentacji audio przed transformacją). Parametry CQT, takie jak minimalna częstotliwość (np. odpowiadająca dźwiękowi E2 gitary), liczba prążków (np. 192) oraz liczba prążków na oktawę (np. 24), są przekazywane podczas inicjalizacji i pochodzą z centralnej konfiguracji \autocite{Wiggins2019TabCNN, Zang2023SynthTab}. Transformata CQT jest obliczana przy użyciu biblioteki Librosa, a jej wynik konwertowany na skalę decybelową.
+\end{itemize}
+Dla zbioru treningowego, komponent ten implementuje również augmentację danych w locie, mającą na celu zwiększenie różnorodności danych i poprawę zdolności generalizacyjnych modelu \autocite{Zang2023SynthTab, Su2014SparseCepstral}.
+\begin{itemize}
+\item \textbf{Augmentacje audio} (stosowane do surowego sygnału przed obliczeniem CQT):
+\begin{itemize}
+\item Rozciąganie w czasie (\english{time stretching}): modyfikuje tempo nagrania w zdefiniowanym zakresie, z odpowiednią korektą czasów w etykietach.
+\item Dodawanie szumu (\english{noise addition}): do sygnału dodawany jest szum o losowo wybranej amplitudzie.
+\item Losowe wzmocnienie (\english{random gain}): amplituda sygnału jest mnożona przez losowy współczynnik.
+\end{itemize}
+Prawdopodobieństwa zastosowania każdej z tych augmentacji oraz zakresy losowanych parametrów są konfigurowalne.
+\item \textbf{Augmentacja spektrogramu} (SpecAugment): stosowana do wygenerowanych spektrogramów (Mel lub CQT). Polega na losowym maskowaniu pewnych zakresów częstotliwości oraz fragmentów czasowych. Parametry maskowania są również konfigurowalne.
+\end{itemize}
+Niezależnie od źródła cech (plik tensorowy lub generacja w locie), komponent zbioru danych przekształca wczytane surowe adnotacje nutowe na format ramkowy. Dla każdej ramki czasowej spektrogramu tworzone są dwie macierze etykiet (dla sześciu strun gitary): jedna dla onsetów (wartość 1.0 oznacza początek nuty na danej strunie w danej ramce, 0.0 w przeciwnym przypadku) i jedna dla numerów progów (liczba całkowita reprezentująca aktywny próg, ze specjalną wartością dla ciszy). Liczba ramek w etykietach jest synchronizowana z liczbą ramek w tensorze cech.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\textwidth]{fig/fig_3_1.png}
+\caption{Wizualizacja etykiet ramkowych dla fragmentu utworu. Górny panel przedstawia macierz onsetów, gdzie pionowe linie oznaczają moment rozpoczęcia nuty na danej strunie. Dolny panel pokazuje macierz aktywności progów, gdzie czarne obszary reprezentują czas trwania dźwięku na danej strunie.}
+\label{fig:piano_roll_labels}
+\end{figure}
+
+\subsubsection{Przetwarzanie Wsadowe i Walidacja Danych}
+\label{sssec:przetwarzanie_wsadowe_walidacja}
+Do efektywnego treningu modelu, próbki danych są grupowane we wsady (\english{batches}). Ponieważ poszczególne próbki (utwory) mogą mieć różną długość, zaimplementowano mechanizm dopełniania (\english{padding}). Dedykowana funkcja agregująca, używana przez mechanizm ładowania danych, uzupełnia tensory cech i etykiet w ramach wsadu do długości najdłuższej sekwencji w tym wsadzie, wykorzystując standardowe narzędzia frameworka PyTorch.
+System zawiera również zestaw narzędzi diagnostycznych do weryfikacji poprawności i spójności przetworzonych danych. Funkcje te sprawdzają, czy kształty i typy danych tensorów (np. CQT, Mel, etykiet onsetów i progów) są zgodne z oczekiwaniami zdefiniowanymi w konfiguracji, oraz czy wartości w tensorach mieszczą się w oczekiwanych zakresach (np. wartości binarne, brak wartości nieokreślonych). Możliwe jest przeprowadzenie pełnej walidacji na całym zbiorze danych, agregując statystyki i drukując podsumowanie.
+
+\subsection{Model Transkrypcji (CRNN)}
+\label{ssec:model_transkrypcji_crnn}
+Sercem systemu transkrypcji jest konwolucyjno-rekurencyjna sieć neuronowa (CRNN), zaimplementowana w frameworku PyTorch. Architektura ta, przedstawiona na rysunku \ref{fig:crnn_architecture}, została zaprojektowana z myślą o przetwarzaniu dwuwymiarowych reprezentacji czasowo-częstotliwościowych (mel-spektrogramów lub CQT) i modelowaniu zależności czasowych.
+
+Model składa się z dwóch głównych komponentów:
+\begin{itemize}
+\item \textbf{Frontend konwolucyjny (CNN)}: Ta część, inspirowana architekturą TabCNN \autocite{Wiggins2019TabCNN}, jest odpowiedzialna za ekstrakcję cech z wejściowego spektrogramu. Składa się z sekwencji bloków, gdzie każdy blok zawiera warstwę splotową 2D (\texttt{Conv2d}), po której następuje normalizacja wsadowa (\texttt{BatchNorm2d}), nieliniowa funkcja aktywacji ReLU oraz opcjonalnie warstwa redukcji wymiaru poprzez wybór wartości maksymalnej (\texttt{MaxPool2d}). Parametry tych warstw, takie jak liczba kanałów wejściowych i wyjściowych, rozmiary kerneli, krok oraz parametry poolingu, są definiowane w centralnej konfiguracji.
+\item \textbf{Backend rekurencyjny (RNN)}: Wyjście z części CNN, po odpowiednim przekształceniu wymiarów (permutacja i spłaszczenie), jest podawane na wejście dwukierunkowej sieci LSTM (\english{Long Short-Term Memory}). Sieć LSTM ma za zadanie analizować sekwencję cech w czasie, ucząc się zależności długoterminowych. Kluczowe parametry LSTM, takie jak rozmiar wejściowy (obliczany na podstawie wymiarów wyjściowych z CNN), rozmiar stanu ukrytego, liczba warstw oraz współczynnik dropout dla regularyzacji, są konfigurowalne.
+\item \textbf{Warstwy Wyjściowe}: Przetworzone przez RNN sekwencje cech są następnie podawane na dwie oddzielne, w pełni połączone warstwy liniowe (\texttt{Linear}). Jedna warstwa (\texttt{onset\_fc}) generuje logity dla predykcji onsetów dla każdej z sześciu strun. Druga warstwa (\texttt{fret\_fc}) generuje logity dla predykcji klas progów (włączając klasę ciszy) dla każdej struny. Logity dla progów są następnie przekształcane do ostatecznego kształtu odpowiadającego wymiarom: wsad, czas, struny, klasy progów. Takie podejście wielozadaniowe jest inspirowane pracą "Onsets and Frames" \autocite{Hawthorne2018Onsets}.
+\end{itemize}
+System zawiera również funkcję pomocniczą do ładowania zapisanego stanu modelu z pliku, tworząc nową instancję modelu z odpowiednimi parametrami i wczytując do niej zapisane wagi.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.4\textwidth]{fig/fig_3_2.png}
+\caption{Schemat architektury zaimplementowanego modelu CRNN. Przedstawia przepływ danych od wejściowego tensora spektrogramu, przez frontend konwolucyjny, backend rekurencyjny, aż po rozdzielenie na dwie głowice wyjściowe dla predykcji onsetów i progów.}
+\label{fig:crnn_architecture}
+\end{figure}
+
+\subsection{Proces Treningu Modelu}
+\label{ssec:proces_treningu_modelu}
+Proces treningu modelu jest zarządzany przez dedykowany moduł, który orkiestruje cały cykl dla pojedynczego zestawu hiperparametrów.
+
+\subsubsection{Inicjalizacja i Pętla Treningowa}
+\label{sssec:inicjalizacja_petla_treningowa}
+Dla każdego przebiegu w ramach przeszukiwania hiperparametrów tworzony jest unikalny katalog na artefakty. Następnie inicjalizowany jest model CRNN, funkcja straty, optymalizator (AdamW) oraz, opcjonalnie, mechanizm harmonogramowania współczynnika uczenia, wszystko na podstawie przekazanych hiperparametrów.
+Główna pętla treningowa iteruje przez zdefiniowaną liczbę epok. W każdej epoce wykonywane są dwie fazy:
+\begin{itemize}
+\item \textbf{Faza treningowa}: Model jest ustawiany w tryb treningowy. Dla każdego wsadu danych ze zbioru treningowego zerowane są gradienty, wykonywane jest przejście w przód przez model, obliczana jest złożona funkcja straty, a następnie wykonywana jest propagacja wsteczna i aktualizacja wag modelu przez optymalizator.
+\item \textbf{Faza walidacyjna}: Model jest ustawiany w tryb ewaluacyjny, a obliczanie gradientów jest wyłączane. Dla każdego wsadu danych ze zbioru walidacyjnego wykonywane jest przejście w przód, obliczana jest funkcja straty oraz szeroki zestaw metryk wydajności.
+\end{itemize}
+Wszystkie straty i metryki są zapisywane w historii treningu. Postępy są logowane do pliku tekstowego oraz wyświetlane na konsoli. Stosowany jest mechanizm harmonogramowania współczynnika uczenia (np. redukcja po okresie braku poprawy metryki walidacyjnej) oraz mechanizm wczesnego zatrzymywania, który przerywa trening, jeśli śledzona metryka walidacyjna nie poprawia się przez określoną liczbę epok. Najlepszy model (na podstawie metryki walidacyjnej) jest zapisywany. Na koniec generowany jest wykres historii treningu.
+
+\subsubsection{Funkcja Straty i Optymalizacja Progów}
+\label{sssec:funkcja_straty_optymalizacja_progow}
+Zastosowano niestandardową, złożoną funkcję straty, która jest ważoną sumą dwóch komponentów, co przedstawia wzór \ref{eq:combined_loss}:
+\begin{itemize}
+\item \textbf{Strata Onsetów}: Obliczana przy użyciu binarnej entropii krzyżowej z logitami (\texttt{BCEWithLogitsLoss}) dla zadania binarnej klasyfikacji onsetów. Strata jest maskowana, aby uwzględniać tylko rzeczywiste dane w sekwencjach (bez dopełnienia). Opcjonalnie można zastosować ważenie klas dodatnich (\texttt{pos\_weight}) w celu przeciwdziałania niezbalansowaniu klas.
+\item \textbf{Strata Progów}: Obliczana przy użyciu entropii krzyżowej (\texttt{CrossEntropyLoss}) dla zadania wieloklasowej klasyfikacji progów. Wykorzystuje się ignorowanie określonego indeksu (\texttt{ignore\_index}) do pomijania wartości dopełniających.
+\end{itemize}
+Wagi obu składników straty są konfigurowalnymi hiperparametrami.
+
+\begin{equation}
+\mathcal{L}_{\text{total}} = \lambda_{\text{onset}} \cdot \mathcal{L}_{\text{onset}} + \lambda_{\text{fret}} \cdot \mathcal{L}_{\text{fret}}
+\label{eq:combined_loss}
+\end{equation}
+gdzie $\mathcal{L}_{\text{total}}$ to całkowita strata, $\mathcal{L}_{\text{onset}}$ i $\mathcal{L}_{\text{fret}}$ to straty dla predykcji onsetów i progów, a $\lambda_{\text{onset}}$ i $\lambda_{\text{fret}}$ to odpowiadające im wagi.
+
+Podczas fazy walidacyjnej, dla predykcji onsetów, stosowany jest mechanizm optymalizacji progu decyzyjnego. Iteruje on po zdefiniowanym zakresie możliwych wartości progów prawdopodobieństwa i dla każdego progu oblicza metryki klasyfikacji binarnej (precyzja, czułość, F1, dokładność). Wybierany jest próg, który maksymalizuje miarę F1, i ten optymalny próg jest używany do dalszych obliczeń metryk oraz w fazie testowania.
+
+\subsection{Ewaluacja i Generowanie Wyników}
+\label{ssec:ewaluacja_generowanie_wynikow_rozdzial}
+Po zakończeniu treningu, najlepszy model jest poddawany finalnej ewaluacji na zbiorze testowym. System umożliwia również generowanie wyników w formatach ułatwiających analizę jakościową.
+
+\subsubsection{Konwersja Predykcji na Nuty i Metryki Ewaluacyjne}
+\label{sssec:konwersja_metryki_ewaluacyjne}
+Ramkowe predykcje modelu (prawdopodobieństwa onsetów i klasy progów) są przekształcane w listę dyskretnych zdarzeń nutowych. Proces ten iteruje po każdej strunie i ramce czasowej. Wykorzystuje prostą logikę maszyny stanów: wykrycie onsetu (prawdopodobieństwo powyżej zoptymalizowanego progu) dla aktywnego progu inicjuje nową nutę. Nuta jest kontynuowana, dopóki na tej samej strunie nie pojawi się nowy onset, nie zostanie wykryta cisza, nie zmieni się numer progu, lub sekwencja się nie zakończy. Każda przewidziana nuta jest reprezentowana przez czas początku, końca, wysokość MIDI, numer struny i progu.
+Do oceny jakości transkrypcji wykorzystywane są metryki zarówno na poziomie ramek, jak i na poziomie nut.
+
+\paragraph{Metryki na poziomie ramek}
+Podstawowe metryki dla detekcji onsetów na poziomie ramek, takie jak Precyzja, Czułość i F1-Score, są obliczane zgodnie ze standardowymi definicjami (wzory \ref{eq:precision}–\ref{eq:f1_score}), gdzie $TP$ (prawdziwie pozytywne), $FP$ (fałszywie pozytywne) i $FN$ (fałszywie negatywne) odnoszą się do liczby poprawnie, błędnie i niewykrytych ramek z onsetami.
+
+\begin{equation}
+\text{Precyzja}_{\text{ramka}} = \frac{TP}{TP + FP}
+\label{eq:precision}
+\end{equation}
+\begin{equation}
+\text{Czułość}_{\text{ramka}} = \frac{TP}{TP + FN}
+\label{eq:recall}
+\end{equation}
+\begin{equation}
+\text{F1-Score}_{\text{ramka}} = 2 \cdot \frac{\text{Precyzja}_{\text{ramka}} \cdot \text{Czułość}_{\text{ramka}}}{\text{Precyzja}_{\text{ramka}} + \text{Czułość}_{\text{ramka}}}
+\label{eq:f1_score}
+\end{equation}
+
+Dodatkowo, zaimplementowano metrykę F-score dla tabulatury (FTab) na poziomie ramek, która ocenia poprawność predykcji progów tylko w tych ramkach, które są aktywne (tzn. w których faktycznie jest grany dźwięk). Jej składowe, Precyzja (P-Tab) i Czułość (R-Tab), zdefiniowano we wzorach \ref{eq:ptab}-\ref{eq:rtab}.
+
+\begin{equation}
+\text{P-Tab}_{\text{ramka}} = \frac{\sum TP_{\text{ftab}}}{\sum \text{Predykcje Aktywne}}
+\label{eq:ptab}
+\end{equation}
+\begin{equation}
+\text{R-Tab}_{\text{ramka}} = \frac{\sum TP_{\text{ftab}}}{\sum \text{Etykiety Aktywne}}
+\label{eq:rtab}
+\end{equation}
+gdzie $TP_{\text{ftab}}$ to ramki, w których zarówno predykcja jak i etykieta są aktywne i mają ten sam numer progu.
+
+\paragraph{Metryki na poziomie nut}
+Metryki na poziomie nut są obliczane z wykorzystaniem biblioteki \texttt{mir\_eval} oraz przez dedykowane implementacje. Obejmują one ocenę detekcji onsetów z tolerancją czasową (50 ms) oraz metrykę TDR (\english{Tablature Detection Rate}), która jest miarą F1-score dla poprawnie zidentyfikowanych nut (zgodność czasu rozpoczęcia, numeru struny i progu).
+
+\subsubsection{Generowanie Wyników i Analiza Końcowa}
+\label{sssec:generowanie_wynikow_analiza_koncowa}
+System pozwala na generowanie plików MIDI z predykcji modelu dla wybranych próbek, co umożliwia odsłuchanie wyników. Dodatkowo, tworzone są tabulatury w formacie tekstowym (ASCII), zarówno dla etykiet referencyjnych, jak i dla predykcji modelu, co ułatwia wizualne porównanie i obliczenie prostych metryk dopasowania.
+Po zakończeniu całego procesu przeszukiwania hiperparametrów, moduł analizy końcowej identyfikuje najlepszy przebieg, ładuje odpowiadający mu model i generuje wspomniane pliki MIDI oraz tabulatury tekstowe dla kilku próbek ze zbioru testowego, używając optymalnego progu onsetu znalezionego podczas walidacji.
+
+\subsection{Wizualizacja}
+\label{ssec:wizualizacja}
+System zawiera zestaw funkcji do tworzenia różnego rodzaju wykresów przy użyciu biblioteki Matplotlib. Umożliwiają one wizualizację:
+\begin{itemize}
+\item Spektrogramów wejściowych (Mel lub CQT).
+\item Etykiet i predykcji onsetów w formie grafu typu "piano roll".
+\item Etykiet i predykcji progów w formie kolorowej mapy.
+\item Zbiorczych wykresów dla pojedynczych próbek, pokazujących spektrogram oraz odpowiadające mu etykiety i predykcje.
+\item Ewolucji strat i metryk wydajności w kolejnych epokach treningu.
+\end{itemize}
+Te narzędzia wizualizacyjne są wykorzystywane zarówno do weryfikacji poprawności danych, jak i do analizy wyników działania modelu i procesu treningu.
+
+\section{Analiza Teoretyczna Rozwiązania}
+\label{sec:analiza_teoretyczna_rozwiazania_fakt}
+W tej sekcji dokonano analizy teoretycznej zaimplementowanego systemu, odnosząc poszczególne komponenty do ugruntowanych koncepcji teoretycznych i literatury naukowej, bazując na przedstawionych faktach implementacyjnych.
+
+\subsection{Wybór Architektury CRNN w Kontekście GTT}
+\label{ssec:analiza_crnn_teoretyczna_fakt}
+Zastosowanie architektury konwolucyjno-rekurencyjnej (CRNN) jest dobrze uzasadnione specyfiką zadania automatycznej transkrypcji tabulatur gitarowych (GTT). Połączenie splotowych sieci neuronowych (CNN) jako ekstraktora cech z wejściowych reprezentacji czasowo-częstotliwościowych oraz rekurencyjnych sieci neuronowych (RNN) do modelowania sekwencji czasowych tych cech jest sprawdzonym podejściem w dziedzinie transkrypcji muzycznej \autocite{Hawthorne2018Onsets, Wiggins2019TabCNN}.
+\begin{itemize}
+\item Warstwy konwolucyjne (CNN), zaimplementowane jako TabCNN, efektywnie uczą się hierarchicznych, lokalnych cech z dwuwymiarowych spektrogramów (Mel lub CQT). Są zdolne do identyfikacji wzorców istotnych dla rozpoznawania dźwięków gitarowych, takich jak struktury harmoniczne czy transjenty \autocite{Wiggins2019TabCNN, Benetos2019AutomaticMusicTranscription}.
+\item Warstwy rekurencyjne, w tym przypadku dwukierunkowe LSTM, są wyspecjalizowane w modelowaniu zależności czasowych w sekwencjach cech dostarczonych przez CNN \autocite{Benetos2019AutomaticMusicTranscription}. Dwukierunkowość pozwala na analizę każdej ramki w kontekście zarówno przeszłych, jak i przyszłych zdarzeń, co jest korzystne dla precyzji transkrypcji \autocite{Hawthorne2018Onsets}.
+\end{itemize}
+Podejście wielozadaniowe, polegające na jednoczesnej predykcji onsetów i progów przez oddzielne głowice wyjściowe, inspirowane pracą \autocite{Hawthorne2018Onsets}, pozwala modelowi uczyć się bardziej kompletnych reprezentacji.
+
+\subsection{Reprezentacja Sygnału Wejściowego}
+\label{ssec:analiza_reprezentacji_teoretyczna_fakt}
+System umożliwia eksperymentalne porównanie dwóch typów reprezentacji czasowo-częstotliwościowych, co stanowi istotny element badawczy.
+\begin{itemize}
+\item \textbf{Mel-spektrogramy} są standardowym wyborem w wielu zadaniach MIR ze względu na ich psychoakustyczną motywację – skala Mel aproksymuje ludzką percepcję wysokości dźwięku \autocite{Benetos2019AutomaticMusicTranscription}.
+\item \textbf{Spektrogramy Constant-Q (CQT)} oferują logarytmiczne skalowanie osi częstotliwości, co bezpośrednio odpowiada strukturze skal muzycznych. Taka reprezentacja, gdzie rozdzielczość częstotliwościowa jest proporcjonalna do częstotliwości (np. stała liczba prążków na oktawę), może być bardziej naturalna dla modeli CNN w zadaniach muzycznych, potencjalnie ułatwiając naukę cech niezmienniczych względem wysokości dźwięku \autocite{Wiggins2019TabCNN, Zang2023SynthTab}. Użycie parametrów CQT (np. 192 prążki, 24 prążki na oktawę) jest zgodne z praktykami stosowanymi w literaturze dla transkrypcji gitarowej \autocite{Wiggins2019TabCNN}.
+\end{itemize}
+Możliwość generowania CQT w locie dla zbioru treningowego, w połączeniu z augmentacją audio, pozwala na efektywne wykorzystanie tej reprezentacji bez konieczności wstępnego przetwarzania i przechowywania dużych ilości danych.
+
+\subsection{Funkcja Straty i Optymalizacja Wielozadaniowa}
+\label{ssec:analiza_loss_teoretyczna_fakt}
+Zastosowanie złożonej funkcji straty, będącej ważoną sumą strat dla predykcji onsetów i progów, jest przykładem uczenia wielozadaniowego (\english{multi-task learning}). Takie podejście często prowadzi do poprawy jakości predykcji, ponieważ model uczy się współdzielonych reprezentacji, które są korzystne dla obu powiązanych zadań \autocite{Hawthorne2018Onsets}.
+\begin{itemize}
+\item Użycie binarnej entropii krzyżowej dla predykcji onsetów jest standardem dla zadań klasyfikacji binarnej.
+\item Użycie entropii krzyżowej dla predykcji progów jest odpowiednie dla zadań klasyfikacji wieloklasowej.
+\end{itemize}
+Maskowanie strat w celu ignorowania dopełnionych części sekwencji oraz możliwość ważenia poszczególnych komponentów straty są istotnymi elementami zapewniającymi stabilny i efektywny trening. Optymalizacja progu decyzyjnego dla onsetów na zbiorze walidacyjnym pozwala na dostosowanie modelu do specyfiki danych i maksymalizację wybranej metryki (np. F1-score).
+
+\subsection{Techniki Augmentacji Danych}
+\label{ssec:analiza_augmentacji_teoretyczna_fakt}
+Zastosowane techniki augmentacji danych odgrywają kluczową rolę w procesie treningu, szczególnie przy pracy ze zbiorami danych o ograniczonej wielkości, takimi jak GuitarSet \autocite{Wiggins2019TabCNN, Zang2023SynthTab}.
+\begin{itemize}
+\item \textbf{Augmentacje audio} (rozciąganie w czasie, dodawanie szumu, losowe wzmocnienie), stosowane przed ekstrakcją cech CQT, symulują naturalne wariacje występujące w rzeczywistych nagraniach gitarowych, takie jak zmiany tempa, różne poziomy szumu czy dynamiki gry \autocite{Su2014SparseCepstral}.
+\item \textbf{Augmentacja spektrogramu (SpecAugment)}, polegająca na maskowaniu fragmentów w dziedzinie czasu i częstotliwości, zmusza model do nauki bardziej robustnych i rozproszonych cech, zwiększając jego odporność na częściowe zakłócenia sygnału lub niewielkie zmiany w artykulacji \autocite{Zang2023SynthTab}.
+\end{itemize}
+Stosowanie tych technik wyłącznie na zbiorze treningowym i w locie jest efektywnym sposobem na zwiększenie efektywnego rozmiaru zbioru treningowego bez konieczności generowania i przechowywania dodatkowych danych.
+
+\section{Uzasadnienie Wyboru Zastosowanych Metod, Algorytmów i Narzędzi}
+\label{sec:uzasadnienie_wyboru_metod_fakt}
+W tej sekcji przedstawiono uzasadnienie decyzji dotyczących wyboru konkretnych metod, algorytmów i narzędzi programistycznych, opierając się na przedstawionych faktach implementacyjnych.
+
+\subsection{Zbiór Danych GuitarSet}
+\label{ssec:uzasadnienie_guitarset_wybor_fakt}
+Wybór zbioru danych GuitarSet \autocite{Wiggins2019TabCNN} jest podyktowany jego unikalnymi cechami, które są kluczowe dla zadania automatycznej transkrypcji na tabulaturę. GuitarSet dostarcza nie tylko nagrania audio, ale przede wszystkim precyzyjne adnotacje na poziomie strun, określające numer struny i progu dla każdej zagranej nuty. Te informacje, uzyskane dzięki zastosowaniu przetworników heksafonicznych, są niezbędne do uczenia modelu zdolnego do rozwiązywania problemu niejednoznaczności opalcowania \autocite{Wiggins2019TabCNN, obrazGitaraNiejednoznacznosc}. Mimo ograniczeń co do rozmiaru, GuitarSet pozostaje standardem w badaniach nad GTT.
+
+\subsection{Wybór Reprezentacji Czasowo-Częstotliwościowych}
+\label{ssec:uzasadnienie_reprezentacji_wybor_fakt}
+Decyzja o zaimplementowaniu i umożliwieniu porównania mel-spektrogramów oraz spektrogramów CQT jest motywowana chęcią empirycznej weryfikacji skuteczności tych dwóch popularnych reprezentacji w kontekście GTT. Mel-spektrogramy są standardem w wielu zadaniach MIR ze względu na ich psychoakustyczną motywację \autocite{Benetos2019AutomaticMusicTranscription}. Z kolei CQT, z logarytmiczną skalą częstotliwości, jest teoretycznie lepiej dopasowana do natury muzyki i może ułatwiać modelom CNN naukę cech istotnych dla transkrypcji gitarowej \autocite{Wiggins2019TabCNN, Zang2023SynthTab}. Możliwość eksperymentowania z obiema reprezentacjami w ramach jednego systemu jest jego istotną zaletą badawczą.
+
+\subsection{Architektura CRNN jako Model Transkrypcji}
+\label{ssec:uzasadnienie_crnn_wybor_fakt}
+Wybór architektury CRNN, łączącej konwolucyjny front-end (TabCNN) z rekurencyjnym back-endem (LSTM), jest uzasadniony jej udokumentowaną skutecznością w zadaniach transkrypcji muzycznej \autocite{Hawthorne2018Onsets, Wiggins2019TabCNN}. CNN efektywnie ekstrahują cechy z dwuwymiarowych spektrogramów, podczas gdy dwukierunkowe LSTM modelują zależności czasowe w tych cechach. Takie połączenie pozwala na kompleksową analizę sygnału audio. Architektura ta oferuje dobry kompromis między zdolnościami modelowania a złożonością obliczeniową, co jest istotne przy ograniczonych zasobach i rozmiarze zbioru danych, w porównaniu do bardziej zasobożernych modeli, np. opartych w całości na Transformerach \autocite{Hawthorne2021Seq2SeqTranscription}.
+
+\subsection{Wykorzystane Biblioteki Programistyczne}
+\label{ssec:uzasadnienie_bibliotek_wybor_fakt}
+Dobór narzędzi programistycznych odzwierciedla aktualne standardy w badaniach z zakresu MIR i uczenia maszynowego.
+\begin{itemize}
+\item \textbf{PyTorch} został wybrany jako główny framework do głębokiego uczenia ze względu na jego elastyczność, dynamiczne grafy obliczeniowe oraz bogaty ekosystem narzędzi wspierających rozwój modeli uczenia maszynowego \autocite{Paszke2019PyTorch}.
+\item \textbf{Librosa} jest standardową biblioteką do analizy sygnałów audio i muzyki w Pythonie, dostarczającą implementacje funkcji do wczytywania audio, ekstrakcji cech (STFT, mel-spektrogramy, CQT) oraz augmentacji \autocite{McFee2022Librosa}.
+\item \textbf{Mirdata} ułatwia standaryzowaną pracę ze zbiorami danych MIR, takimi jak GuitarSet, promując powtarzalność badań \autocite{Wiggins2019TabCNN}.
+\item Inne biblioteki, takie jak NumPy, Scikit-learn, Matplotlib, JAMS i PrettyMIDI, dostarczają niezbędnych narzędzi na różnych etapach projektu, od operacji numerycznych, przez podział danych i wizualizację, po pracę z adnotacjami i generowanie plików MIDI.
+\end{itemize}
+Korzystanie z tych sprawdzonych narzędzi pozwoliło na skupienie się na aspektach badawczych projektu.
+
+\section{Podsumowanie Rozdziału}
+\label{sec:podsumowanie_rozdzialu_3_fakt}
+W niniejszym rozdziale przedstawiono szczegółowy opis projektu i implementacji systemu do automatycznej transkrypcji muzyki gitarowej na tabulaturę. Rdzeniem systemu jest konwolucyjno-rekurencyjna sieć neuronowa (CRNN), składająca się z konwolucyjnego ekstraktora cech oraz dwukierunkowej sieci LSTM, która przetwarza reprezentacje czasowo-częstotliwościowe sygnału audio – mel-spektrogramy lub, eksperymentalnie, spektrogramy Constant-Q. Model jest trenowany w sposób wielozadaniowy do jednoczesnej predykcji onsetów oraz numerów progów dla każdej struny gitary.
+Omówiono kluczowe etapy działania systemu: przygotowanie danych, w tym podział zbioru GuitarSet i ekstrakcję cech; architekturę modelu CRNN; proces treningu z wykorzystaniem złożonej funkcji straty, optymalizatora AdamW oraz technik augmentacji danych (audio i spektrogramów); a także mechanizmy ewaluacji i generowania wyników w formatach MIDI i tabulatur tekstowych. Podkreślono elastyczność systemu w zakresie wyboru reprezentacji wejściowej oraz konfiguracji parametrów.
+Analiza teoretyczna oraz uzasadnienie wyboru zastosowanych metod, algorytmów i narzędzi wykazały, że przyjęte rozwiązania są zgodne z aktualnym stanem wiedzy i najlepszymi praktykami w dziedzinie automatycznej transkrypcji muzycznej i uczenia maszynowego. Zaimplementowany system, dzięki swojej modułowości i oparciu na sprawdzonych technologiach, stanowi solidną platformę do przeprowadzenia dalszych badań eksperymentalnych.

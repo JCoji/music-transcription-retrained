@@ -136,6 +136,26 @@
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \addvspace {10\p@ }
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Wizualizacja etykiet ramkowych dla fragmentu utworu. Górny panel przedstawia macierz onsetów, gdzie pionowe linie oznaczają moment rozpoczęcia nuty na danej strunie. Dolny panel pokazuje macierz aktywności progów, gdzie czarne obszary reprezentują czas trwania dźwięku na danej strunie.}}{32}{figure.caption.21}%
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Schemat architektury zaimplementowanego modelu CRNN. Przedstawia przepływ danych od wejściowego tensora spektrogramu, przez frontend konwolucyjny, backend rekurencyjny, aż po rozdzielenie na dwie głowice wyjściowe dla predykcji onsetów i progów.}}{35}{figure.caption.23}%
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
