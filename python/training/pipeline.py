@@ -1,12 +1,10 @@
-import numpy as np
 import torch
 import os
 import time
-import json  # Dodano import json
-
+import json
 from torch import optim
 from tqdm import tqdm
-import config  # Zakładamy, że config zawiera DATASET_TRAIN_AUGMENTATION_PARAMS
+import config
 from evaluation import performance_metrics
 from model import architecture, utils
 from . import epoch_processing, loss_functions
@@ -21,7 +19,7 @@ def run_training_loop(
     optimizer_instance,
     scheduler_instance,
     criterion_instance_combined,
-    run_training_config,  # Ten słownik powinien zawierać też parametry augmentacji
+    run_training_config,
     audio_sr_val,
     audio_hop_len_val,
 ):
@@ -94,11 +92,8 @@ def run_training_loop(
             f"--- Konfiguracja Treningu (tracking: {checkpoint_metric_to_track}, Batch Size: {current_batch_size}) ---\n"
         )
 
-        # Zapisywanie parametrów modelu i treningu (z hyperparams_combo)
         log_file_handle.write("  --- Parametry Modelu/Treningu ---\n")
         for conf_key, conf_value in run_training_config.items():
-            # Filtrujemy klucze, aby nie zapisywać wewnętrznych parametrów konfiguracyjnych pętli treningowej
-            # ani parametrów augmentacji (zostaną zapisane osobno)
             if (
                 conf_key
                 not in [
@@ -122,7 +117,6 @@ def run_training_loop(
                 log_line = f"    {conf_key}: {conf_value}\n"
                 log_file_handle.write(log_line)
 
-        # Zapisywanie parametrów augmentacji (tych przekazanych w run_training_config)
         log_file_handle.write("  --- Parametry Augmentacji ---\n")
         augmentation_params_to_log = {
             k: v
@@ -135,7 +129,6 @@ def run_training_loop(
         if not augmentation_params_to_log and hasattr(
             config, "DATASET_TRAIN_AUGMENTATION_PARAMS"
         ):
-            # Jeśli nie przekazano w run_training_config, użyj domyślnych z config.py
             augmentation_params_to_log = config.DATASET_TRAIN_AUGMENTATION_PARAMS
 
         for aug_key, aug_value in augmentation_params_to_log.items():
@@ -147,7 +140,6 @@ def run_training_loop(
             f"\nRozpoczynanie pętli treningowej na {num_epochs_total} epok. Śledzona metryka: {checkpoint_metric_to_track}. Batch Size: {current_batch_size}"
         )
 
-        # ... (reszta pętli treningowej bez zmian) ...
         for current_epoch_num in range(num_epochs_total):
             epoch_description_str = f"Epoka {current_epoch_num + 1}/{num_epochs_total}"
 
@@ -278,7 +270,7 @@ def run_training_loop(
                 log_file_handle.write(improvement_log_msg + "\n")
             elif (
                 early_stop_patience_val is not None and current_epoch_num > 0
-            ):  # Dodano warunek current_epoch_num > 0
+            ):
                 epochs_without_improvement += 1
                 no_improvement_log_msg = f"    Brak poprawy {checkpoint_metric_to_track} od {epochs_without_improvement} epok ({metric_value_for_checkpoint:.4f} vs Best: {best_tracked_metric_val:.4f})"
                 if (
@@ -321,8 +313,8 @@ def run_training_loop(
 
 def process_single_hyperparameter_run(
     run_id,
-    hyperparams_combo,  # Ten słownik zawiera parametry modelu/treningu
-    current_augmentation_params,  # NOWY PARAMETR: słownik z parametrami augmentacji
+    hyperparams_combo,
+    current_augmentation_params,
     config_obj,
     main_artifacts_dir,
     train_loader,
@@ -333,9 +325,6 @@ def process_single_hyperparameter_run(
     run_start_time = time.time()
 
     run_description_str = hyperparams_combo.get("run_description", f"run_{run_id}")
-    # Dodajemy informację o augmentacji do opisu folderu, jeśli chcemy rozróżniać
-    # Można to zrobić bardziej elegancko, np. tworząc hash z parametrów augmentacji
-    # Tutaj proste sprawdzenie, czy augmentacje są w ogóle włączone
     aug_suffix = (
         "_augEnabled"
         if current_augmentation_params.get("enable_audio_augmentations", False)
@@ -343,9 +332,6 @@ def process_single_hyperparameter_run(
         else "_augDisabled"
     )
 
-    # Sprawdzamy, czy run_description_str już zawiera informacje o BS
-    # Jeśli nie, a current_augmentation_params ma BATCH_SIZE, dodajemy go.
-    # To jest bardziej dla nazwy folderu, bo BATCH_SIZE jest też w hyperparams_combo
     batch_size_for_desc = hyperparams_combo.get("BATCH_SIZE", "BS_unknown")
     if (
         f"_BS{batch_size_for_desc}" not in run_description_str
@@ -371,7 +357,6 @@ def process_single_hyperparameter_run(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    calculated_cnn_out_dim = None
     try:
         temp_cnn_model = architecture.TabCNN(
             input_channels=config_obj.CNN_INPUT_CHANNELS,
@@ -384,11 +369,11 @@ def process_single_hyperparameter_run(
         )
         with torch.no_grad():
             dummy_cnn_input = torch.randn(
-                1, config_obj.CNN_INPUT_CHANNELS, config_obj.N_MELS, 32
+                1, config_obj.CNN_INPUT_CHANNELS, config_obj.N_BINS_CQT, 32
             )
             dummy_cnn_output = temp_cnn_model(dummy_cnn_input)
             calculated_cnn_out_dim = (
-                temp_cnn_model.output_channels * dummy_cnn_output.shape[2]
+                    temp_cnn_model.output_channels * dummy_cnn_output.shape[2]
             )
         del temp_cnn_model, dummy_cnn_input, dummy_cnn_output
     except Exception as e_cnn:
@@ -396,7 +381,7 @@ def process_single_hyperparameter_run(
         error_summary = {
             "run_index": run_id,
             "params_combo": hyperparams_combo,
-            "augmentation_params": current_augmentation_params,  # Dodano
+            "augmentation_params": current_augmentation_params,
             "status": "CNN_DIM_ERROR",
             "error": str(e_cnn),
             "run_folder_name": current_run_folder_name_sanitized,
@@ -418,6 +403,8 @@ def process_single_hyperparameter_run(
         rnn_hidden_size=hyperparams_combo["RNN_HIDDEN_SIZE"],
         rnn_layers=hyperparams_combo["RNN_LAYERS"],
         rnn_dropout=hyperparams_combo["RNN_DROPOUT"],
+        rnn_type=hyperparams_combo.get("RNN_TYPE", "LSTM"),
+        rnn_bidirectional=hyperparams_combo.get("RNN_BIDIRECTIONAL", False),
         num_strings=config_obj.DEFAULT_NUM_STRINGS,
         max_frets_val=config_obj.MAX_FRETS,
         cnn_input_channels=config_obj.CNN_INPUT_CHANNELS,
@@ -436,7 +423,7 @@ def process_single_hyperparameter_run(
         )
         if hyperparams_combo.get("ONSET_POS_WEIGHT_MANUAL_VALUE", -1) > 0
         else None
-    )  # Dodano .get()
+    )
 
     combined_loss_criterion = loss_functions.CombinedLoss(
         onset_pos_weight=onset_pos_weight_tensor,
@@ -461,7 +448,6 @@ def process_single_hyperparameter_run(
         patience=hyperparams_combo["SCHEDULER_PATIENCE"],
     )
 
-    # Połączenie hiperparametrów modelu/treningu z parametrami augmentacji
     training_run_configuration = {
         "NUM_EPOCHS": config_obj.NUM_EPOCHS_DEFAULT,
         "FRET_NUM_CLASSES": config_obj.MAX_FRETS
@@ -476,32 +462,23 @@ def process_single_hyperparameter_run(
         "EARLY_STOPPING_PATIENCE": config_obj.EARLY_STOPPING_PATIENCE_DEFAULT,
         "CHECKPOINT_METRIC": config_obj.CHECKPOINT_METRIC_DEFAULT,
         "RUN_DESCRIPTION": run_description_str,
-        **hyperparams_combo,  # Parametry modelu/treningu
-        **current_augmentation_params,  # Dodane parametry augmentacji
+        **hyperparams_combo
+        **current_augmentation_params,
     }
-    # Usunięcie duplikatu klucza BATCH_SIZE, jeśli current_augmentation_params go zawiera,
-    # a hyperparams_combo również (co jest bardziej prawdopodobne)
     if (
         "BATCH_SIZE" in hyperparams_combo
         and "BATCH_SIZE" in current_augmentation_params
     ):
-        # Dajemy priorytet wartości z hyperparams_combo (zwykle bardziej specyficzne dla przebiegu)
-        # lub usuwamy z current_augmentation_params przed rozpakowaniem, aby uniknąć konfliktu
-        # W praktyce, BATCH_SIZE powinien być tylko w jednym miejscu (np. hyperparams_combo)
-        # lub kontrolowany globalnie.
-        pass  # Zakładamy, że BATCH_SIZE jest w hyperparams_combo lub globalnie, a nie w current_augmentation_params
+        pass
 
     print(
         f"Rozpoczynanie treningu dla przebiegu {run_id}. Logi w: {current_run_log_file}"
     )
-    # Zapisanie pełnej konfiguracji przebiegu (w tym augmentacji) do pliku JSON w folderze przebiegu
-    # dla łatwiejszej reprodukcji i analizy
     run_config_save_path = os.path.join(
         current_run_artifacts_dir, "run_configuration.json"
     )
     try:
         with open(run_config_save_path, "w", encoding="utf-8") as f_conf:
-            # Konwertujemy tensory na listy, jeśli są w current_augmentation_params (np. limity)
             serializable_aug_params = {
                 k: list(v) if isinstance(v, tuple) else v
                 for k, v in current_augmentation_params.items()
@@ -521,12 +498,12 @@ def process_single_hyperparameter_run(
         training_run_history = run_training_loop(
             model_instance=current_model,
             device_to_use=device,
-            train_loader=train_loader,  # train_loader powinien być już skonfigurowany z odpowiednimi aug params
+            train_loader=train_loader,
             validation_loader=validation_loader,
             optimizer_instance=optimizer,
             scheduler_instance=scheduler,
             criterion_instance_combined=combined_loss_criterion,
-            run_training_config=training_run_configuration,  # Przekazujemy pełną konfigurację
+            run_training_config=training_run_configuration,
             audio_sr_val=config_obj.SAMPLE_RATE,
             audio_hop_len_val=config_obj.HOP_LENGTH,
         )
@@ -538,7 +515,7 @@ def process_single_hyperparameter_run(
         error_summary = {
             "run_index": run_id,
             "params_combo": hyperparams_combo,
-            "augmentation_params": current_augmentation_params,  # Dodano
+            "augmentation_params": current_augmentation_params,
             "status": "TRAINING_ERROR",
             "error": str(e_train),
             "run_folder_name": current_run_folder_name_sanitized,
@@ -563,8 +540,7 @@ def process_single_hyperparameter_run(
         tracked_metric_history = training_run_history.get(
             config_obj.CHECKPOINT_METRIC_DEFAULT, []
         )
-        if tracked_metric_history:  # Sprawdzenie, czy lista nie jest pusta
-            # Upewnij się, że tracked_metric_history zawiera wartości liczbowe
+        if tracked_metric_history:
             valid_metric_history = [
                 m for m in tracked_metric_history if isinstance(m, (int, float))
             ]
@@ -573,14 +549,13 @@ def process_single_hyperparameter_run(
                     best_val_metric_final = min(valid_metric_history)
                     best_metric_epoch_idx = valid_metric_history.index(
                         best_val_metric_final
-                    )  # Użyj .index na odfiltrowanej liście
+                    )
                 else:
                     best_val_metric_final = max(valid_metric_history)
                     best_metric_epoch_idx = valid_metric_history.index(
                         best_val_metric_final
                     )
 
-                # Sprawdź, czy val_optimal_threshold_epoch_frame ma wystarczająco dużo elementów
                 if (
                     "val_optimal_threshold_epoch_frame" in training_run_history
                     and len(training_run_history["val_optimal_threshold_epoch_frame"])
@@ -611,6 +586,8 @@ def process_single_hyperparameter_run(
                 "rnn_hidden_size": hyperparams_combo["RNN_HIDDEN_SIZE"],
                 "rnn_layers": hyperparams_combo["RNN_LAYERS"],
                 "rnn_dropout": hyperparams_combo["RNN_DROPOUT"],
+                "rnn_type": hyperparams_combo.get("RNN_TYPE", "LSTM"),
+                "rnn_bidirectional": hyperparams_combo.get("RNN_BIDIRECTIONAL", False),
                 "num_strings": config_obj.DEFAULT_NUM_STRINGS,
                 "max_frets_val": config_obj.MAX_FRETS,
                 "cnn_input_channels": config_obj.CNN_INPUT_CHANNELS,
@@ -660,7 +637,7 @@ def process_single_hyperparameter_run(
         "run_index": run_id,
         "run_folder_name": current_run_folder_name_sanitized,
         "params_combo": hyperparams_combo,
-        "augmentation_params": current_augmentation_params,  # Dodano parametry augmentacji
+        "augmentation_params": current_augmentation_params,
         f"best_{config_obj.CHECKPOINT_METRIC_DEFAULT}": best_val_metric_final,
         "optimal_threshold_at_best_val_metric_frame": optimal_threshold_at_best_metric_frame,
         "test_metrics": final_test_metrics,

@@ -97,7 +97,15 @@ def extract_annotations_from_jams(jams_file_path):
             and hasattr(annotation_obj.annotation_metadata, "data_source")
         ):
             continue
-        string_num = int(annotation_obj.annotation_metadata.data_source)
+        # Upewnijmy się, że data_source jest stringiem przed konwersją na int
+        string_num_str = annotation_obj.annotation_metadata.data_source
+        if isinstance(string_num_str, str) and string_num_str.isdigit():
+            string_num = int(string_num_str)
+        else:
+            # Można dodać logowanie lub obsługę tego przypadku, jeśli to konieczne
+            # print(f"Ostrzeżenie: Nieoczekiwany format data_source: {string_num_str} w pliku {jams_file_path}")
+            continue
+
         if string_num not in config.OPEN_STRING_PITCHES_JAMS:
             continue
 
@@ -109,6 +117,8 @@ def extract_annotations_from_jams(jams_file_path):
             pitch_midi = float(obs.value)
             fret_num = int(round(pitch_midi - open_string_pitch))
             if fret_num < 0:
+                # Czasami nuty są minimalnie niższe niż strój pustej struny
+                # print(f"Ostrzeżenie: Fret ujemny ({fret_num}) dla {pitch_midi} na strunie {string_num} (open: {open_string_pitch}). Zerowanie.")
                 fret_num = 0
             notes.append((onset_sec, offset_sec, string_num, fret_num, pitch_midi))
 
@@ -116,7 +126,8 @@ def extract_annotations_from_jams(jams_file_path):
     return notes
 
 def process_single_track(track_object, output_file_base,
-                         target_sr, fft_size, hop_size, num_mel_bands):
+                         target_sr, hop_size,
+                         num_cqt_bins, cqt_bins_per_octave, cqt_fmin): # Zmienione parametry
     features_path = f"{output_file_base}_features.pt"
     labels_path = f"{output_file_base}_labels.pt"
 
@@ -143,10 +154,18 @@ def process_single_track(track_object, output_file_base,
 
     try:
         audio, _ = librosa.load(audio_file_path, sr=target_sr, mono=True)
-        mel_spectrogram = librosa.feature.melspectrogram(
-            y=audio, sr=target_sr, n_fft=fft_size, hop_length=hop_size, n_mels=num_mel_bands
+        # Zmiana z Mel na CQT
+        cqt_spectrogram = librosa.cqt(
+            y=audio,
+            sr=target_sr,
+            hop_length=hop_size,
+            fmin=cqt_fmin,
+            n_bins=num_cqt_bins,
+            bins_per_octave=cqt_bins_per_octave
         )
-        log_mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
+        # CQT zwraca wartości zespolone, bierzemy moduł i konwertujemy na dB
+        log_cqt_spectrogram = librosa.amplitude_to_db(np.abs(cqt_spectrogram), ref=np.max)
+
     except Exception as e:
         print(f"  Błąd podczas przetwarzania audio dla {track_object.track_id}: {e}")
         return "error"
@@ -166,11 +185,11 @@ def process_single_track(track_object, output_file_base,
         return "error"
 
     if not annotations:
-        print(f"  Błąd: Brak adnotacji w pliku JAMS dla {track_object.track_id}")
-        return "error"
+        print(f"  Błąd: Brak adnotacji w pliku JAMS dla {track_object.track_id}") # Może być ostrzeżeniem, jeśli chcemy przetwarzać mimo to
+        return "error" # Lub "processed_no_labels" jeśli chcemy zachować cechy
 
     torch.save(
-        torch.tensor(log_mel_spectrogram, dtype=torch.float32), features_path
+        torch.tensor(log_cqt_spectrogram, dtype=torch.float32), features_path
     )
     labels_array = np.array(annotations, dtype=np.float32)
     torch.save(torch.from_numpy(labels_array), labels_path)
@@ -181,9 +200,12 @@ def preprocess_guitarset_data(
     processed_output_base_dir,
     track_ids_map,
     audio_sample_rate,
-    audio_n_fft,
     audio_hop_length,
-    audio_n_mels,
+    audio_n_cqt_bins, # Zmieniony parametr
+    audio_cqt_bins_per_octave, # Nowy parametr
+    audio_cqt_fmin # Nowy parametr
+    # audio_n_fft, # Już niepotrzebne tutaj bezpośrednio dla CQT
+    # audio_n_mels, # Już niepotrzebne
 ):
     print("Rozpoczynanie preprocessingu GuitarSet.")
     print(f"Katalog danych (guitarset_data_home): {guitarset_data_home}")
@@ -217,6 +239,8 @@ def preprocess_guitarset_data(
         ):
             try:
                 track_data_object = guitarset_instance.track(current_track_id)
+                # Używamy pełnego track_id (który może zawierać podkatalogi) do odnalezienia,
+                # ale nazwy plików zapisujemy bazując na ostatnim komponencie.
                 track_id_filename_base = os.path.splitext(os.path.basename(current_track_id))[0]
                 output_file_path_base = os.path.join(current_split_output_dir, track_id_filename_base)
 
@@ -224,22 +248,30 @@ def preprocess_guitarset_data(
                     track_data_object,
                     output_file_path_base,
                     audio_sample_rate,
-                    audio_n_fft,
                     audio_hop_length,
-                    audio_n_mels,
+                    audio_n_cqt_bins, # Przekazanie nowych parametrów
+                    audio_cqt_bins_per_octave,
+                    audio_cqt_fmin
                 )
-                processing_stats[split_type][status_msg] +=1
+                if status_msg in processing_stats[split_type]:
+                     processing_stats[split_type][status_msg] +=1
+                else:
+                    print(f"Ostrzeżenie: Nieznany status '{status_msg}' dla utworu {current_track_id}")
+                    processing_stats[split_type]["errors"] += 1
+            except mirdata.core.errors.TrackIdError:
+                print(f"  Błąd: Nie znaleziono utworu o ID '{current_track_id}' w mirdata.GuitarSet.")
+                processing_stats[split_type]["errors"] += 1
             except Exception as e:
                 print(f"  Nieoczekiwany błąd (poza process_single_track) dla utworu {current_track_id}: {e}")
                 processing_stats[split_type]["errors"] += 1
-        print()
+        print() # Nowa linia po tqdm
 
 
     print("\n--- Podsumowanie preprocessingu ---")
     total_tracks_for_processing = sum(len(val) for val in track_ids_map.values())
     print(f"Liczba wszystkich utworów przeznaczonych do przetworzenia (po podziale): {total_tracks_for_processing}")
     for split_key_name in ["train", "validation", "test"]:
-        if split_key_name in processing_stats:
+        if split_key_name in processing_stats: # Sprawdzenie czy klucz istnieje
             print(f"  Zbiór {split_key_name}:")
             print(f"    Nowo przetworzono: {processing_stats[split_key_name]['processed']}")
             print(f"    Pominięto (już istniały): {processing_stats[split_key_name]['skipped']}")

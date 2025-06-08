@@ -1,14 +1,30 @@
 [
     {
-        "run_description": "NewTest_HigherOPW6_OLW9_BaseRun16_Augv7",
+        "run_description": "GRU_Deeper_H768_L2_FinalTune",
         "LEARNING_RATE_INIT": 0.0003,
         "ONSET_LOSS_WEIGHT": 9.0,
         "ONSET_POS_WEIGHT_MANUAL_VALUE": 6.0,
-        "RNN_HIDDEN_SIZE": 512,
-        "RNN_LAYERS": 1,
-        "RNN_DROPOUT": 0.6,
+        "RNN_TYPE": "GRU",
+        "RNN_HIDDEN_SIZE": 768,
+        "RNN_LAYERS": 2,
+        "RNN_DROPOUT": 0.45,
+        "RNN_BIDIRECTIONAL": false,
         "WEIGHT_DECAY": 0.0001,
-        "SCHEDULER_PATIENCE": 8,
+        "SCHEDULER_PATIENCE": 12,
+        "SCHEDULER_FACTOR": 0.15
+    },
+    {
+        "run_description": "GRU_BiDirectional_H768_L2_Final",
+        "LEARNING_RATE_INIT": 0.0003,
+        "ONSET_LOSS_WEIGHT": 9.0,
+        "ONSET_POS_WEIGHT_MANUAL_VALUE": 6.0,
+        "RNN_TYPE": "GRU",
+        "RNN_HIDDEN_SIZE": 768,
+        "RNN_LAYERS": 2,
+        "RNN_DROPOUT": 0.5,
+        "RNN_BIDIRECTIONAL": true,
+        "WEIGHT_DECAY": 0.0001,
+        "SCHEDULER_PATIENCE": 10,
         "SCHEDULER_FACTOR": 0.2
     }
 ]

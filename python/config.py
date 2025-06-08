@@ -1,4 +1,5 @@
 import os
+import librosa
 
 # --- Ścieżki Podstawowe ---
 BASE_PROJECT_DIR = os.getcwd()
@@ -10,8 +11,12 @@ DEFAULT_HYPERPARAMETER_FILE = "hyperparam_set_v1.json"
 SAMPLE_RATE = 22050
 N_FFT = 2048
 HOP_LENGTH = 512
-N_MELS = 128
 MAX_FRETS = 20
+
+# --- Parametry CQT (dostosowane do potencjalnie najlepszej konfiguracji) ---
+FMIN_CQT = librosa.note_to_hz('E2') # Najniższy dźwięk gitary E2 (MIDI 40)
+N_BINS_CQT = 168                     # Zwiększone do 192 (jak w artykule SynthTab)
+BINS_PER_OCTAVE_CQT = 24            # Zwiększone do 24 (jak w artykule SynthTab)
 
 # --- Parametry Podziału Danych i Preprocessingu ---
 OPEN_STRING_PITCHES_JAMS = {0: 40, 1: 45, 2: 50, 3: 55, 4: 59, 5: 64}
@@ -29,8 +34,9 @@ DATASET_COMMON_PARAMS = {
     "audio_hop_length": HOP_LENGTH,
     "audio_sample_rate": SAMPLE_RATE,
     "max_fret_value": MAX_FRETS,
-    "audio_n_fft": N_FFT,
-    "audio_n_mels": N_MELS,
+    "audio_n_cqt_bins": N_BINS_CQT,
+    "audio_cqt_bins_per_octave": BINS_PER_OCTAVE_CQT,
+    "audio_cqt_fmin": FMIN_CQT,
 }
 
 # --- Domyślne Parametry Augmentacji (dla GuitarSetTabDataset, split 'train') ---
@@ -43,8 +49,8 @@ DATASET_TRAIN_AUGMENTATION_PARAMS = {
     "aug_p_random_gain": 0.7,
     "aug_gain_limits": [0.6, 1.4],
     "enable_specaugment": True,
-    "specaug_time_mask_param": 30,
-    "specaug_freq_mask_param": 15
+    "specaug_time_mask_param": 40,
+    "specaug_freq_mask_param": 26
 }
 
 DATASET_EVAL_AUGMENTATION_PARAMS = {
@@ -54,8 +60,7 @@ DATASET_EVAL_AUGMENTATION_PARAMS = {
 
 # --- Parametry Walidacji Danych (dla validation.py) ---
 VALIDATION_SHAPE_PARAMS = {
-    'N_BINS_CQT': 84,
-    'N_MELS_MEL': N_MELS,
+    'N_BINS_CQT': N_BINS_CQT,
     'N_PITCH_BINS': 88,
     'NUM_STRINGS': 6
 }
@@ -66,8 +71,10 @@ CNN_OUTPUT_CHANNELS_LIST_DEFAULT = [32, 64, 128, 128, 128]
 CNN_KERNEL_SIZES_DEFAULT = [(3, 3), (3, 3), (3, 3), (3, 3), (3, 3)]
 CNN_STRIDES_DEFAULT = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
 CNN_PADDINGS_DEFAULT = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
-CNN_POOLING_KERNELS_DEFAULT = [(2, 1), (2, 1), (2, 1), (2, 1), (1, 1)]
-CNN_POOLING_STRIDES_DEFAULT = [(2, 1), (2, 1), (2, 1), (2, 1), (1, 1)]
+# Dla N_BINS_CQT = 168: 168 -> 84 -> 42 -> 21 -> 10 (ostatni pooling /2) -> 10 (ostatni pooling 1x1)
+# Więc 4 warstwy poolingu 2x1.
+CNN_POOLING_KERNELS_DEFAULT = [(2,1), (2,1), (2,1), (2,1), (1,1)]
+CNN_POOLING_STRIDES_DEFAULT = [(2,1), (2,1), (2,1), (2,1), (1,1)] #
 DEFAULT_NUM_STRINGS = 6
 
 # --- Ustawienia MIDI ---
@@ -106,9 +113,7 @@ TAB_PRED_FILENAME_SUFFIX_TEMPLATE = "_tablature_prediction_thresh{threshold:.2f}
 
 # --- Domyślne Parametry Treningu ---
 NUM_EPOCHS_DEFAULT = 300
-
-BATCH_SIZE_DEFAULT = 2 # ZMIEŃ NA 8
-
+BATCH_SIZE_DEFAULT = 2
 FRET_LOSS_WEIGHT_DEFAULT = 1.0
 EARLY_STOPPING_PATIENCE_DEFAULT = 25
 CHECKPOINT_METRIC_DEFAULT = 'val_tdr_f1'

@@ -13,6 +13,7 @@ def _augment_time_stretch(audio_data, stretch_rate, current_raw_labels):
     adjusted_labels = current_raw_labels
     if current_raw_labels is not None and current_raw_labels.numel() > 0:
         adjusted_labels = current_raw_labels.clone()
+        # Kolumny 0 (onset) i 1 (offset) są w sekundach
         adjusted_labels[:, 0] /= stretch_rate
         adjusted_labels[:, 1] /= stretch_rate
     return stretched_audio, adjusted_labels
@@ -35,8 +36,9 @@ class GuitarSetTabDataset(Dataset):
         audio_hop_length,
         audio_sample_rate,
         max_fret_value,
-        audio_n_fft,
-        audio_n_mels,
+        audio_n_cqt_bins,
+        audio_cqt_bins_per_octave,
+        audio_cqt_fmin,
         label_transform_function=None,
         guitarset_data_home=None,
         enable_audio_augmentations=True,
@@ -50,7 +52,7 @@ class GuitarSetTabDataset(Dataset):
         specaug_time_mask_param=40,
         specaug_freq_mask_param=20,
         specaug_num_time_masks=1,
-        specaug_num_freq_masks=1
+        specaug_num_freq_masks=1,
     ):
         self.processed_data_base_dir = processed_data_base_dir
         self.data_split_name = data_split_name
@@ -61,8 +63,10 @@ class GuitarSetTabDataset(Dataset):
         self.audio_sample_rate = audio_sample_rate
         self.audio_hop_length = audio_hop_length
         self.max_fret_value = max_fret_value
-        self.audio_n_fft = audio_n_fft
-        self.audio_n_mels = audio_n_mels
+        self.audio_n_cqt_bins = audio_n_cqt_bins
+        self.audio_cqt_bins_per_octave = audio_cqt_bins_per_octave
+        self.audio_cqt_fmin = audio_cqt_fmin
+
         self.label_transform_function = label_transform_function
         self.guitarset_data_home = guitarset_data_home
         self.guitarset_loader_instance = None
@@ -79,15 +83,23 @@ class GuitarSetTabDataset(Dataset):
             self.guitarset_loader_instance = mirdata.initialize(
                 "guitarset", data_home=self.guitarset_data_home
             )
-            if not self.guitarset_loader_instance.track_ids:
+            if (
+                not self.guitarset_loader_instance.track_ids
+            ):  # Użyj .track_ids zamiast .tracks
                 raise RuntimeError(
                     f"mirdata.GuitarSet nie znalazł żadnych utworów w guitarset_data_home='{self.guitarset_data_home}'."
                 )
 
-        self.feature_sources = []
+        self.feature_sources = (
+            []
+        )
         self.label_file_paths = []
-        self.base_track_ids = []
-        self.full_track_ids = []
+        self.base_track_ids = (
+            []
+        )
+        self.full_track_ids = (
+            []
+        )
 
         ids_list_file_path = os.path.join(
             self.processed_data_base_dir, f"{self.data_split_name}_ids.txt"
@@ -99,7 +111,9 @@ class GuitarSetTabDataset(Dataset):
 
         with open(ids_list_file_path, "r") as f_ids:
             for line_content in f_ids:
-                full_track_id_from_file = line_content.strip()
+                full_track_id_from_file = (
+                    line_content.strip()
+                )
                 if not full_track_id_from_file:
                     continue
 
@@ -113,6 +127,7 @@ class GuitarSetTabDataset(Dataset):
 
                 if not os.path.exists(label_file_path):
                     continue
+
                 if (
                     self.enable_audio_augmentations
                 ):
@@ -178,9 +193,21 @@ class GuitarSetTabDataset(Dataset):
             enable_specaugment if self.data_split_name == "train" else False
         )
         if self.enable_specaugment:
-            time_masks = [torchaudio.transforms.TimeMasking(time_mask_param=specaug_time_mask_param) for _ in range(specaug_num_time_masks)]
-            freq_masks = [torchaudio.transforms.FrequencyMasking(freq_mask_param=specaug_freq_mask_param) for _ in range(specaug_num_freq_masks)]
-            self.specaugment_transform_op = torch.nn.Sequential(*(time_masks + freq_masks))
+            time_masks = [
+                torchaudio.transforms.TimeMasking(
+                    time_mask_param=specaug_time_mask_param
+                )
+                for _ in range(specaug_num_time_masks)
+            ]
+            freq_masks = [
+                torchaudio.transforms.FrequencyMasking(
+                    freq_mask_param=specaug_freq_mask_param
+                )
+                for _ in range(specaug_num_freq_masks)
+            ]
+            self.specaugment_transform_op = torch.nn.Sequential(
+                *(time_masks + freq_masks)
+            )
 
         if not self.feature_sources:
             print(
@@ -199,10 +226,11 @@ class GuitarSetTabDataset(Dataset):
         feature_source_path = self.feature_sources[item_idx]
         labels_file_path = self.label_file_paths[item_idx]
 
-        loaded_raw_labels = torch.load(labels_file_path, weights_only=True)
-        labels_for_transform = (
-            loaded_raw_labels
+        loaded_raw_labels = torch.load(
+            labels_file_path, weights_only=False
         )
+
+        labels_for_transform = loaded_raw_labels
 
         if (
             self.enable_audio_augmentations
@@ -244,18 +272,19 @@ class GuitarSetTabDataset(Dataset):
                 )
                 audio_data = _augment_add_noise(audio_data, noise_level_val)
 
-            mel_spec = librosa.feature.melspectrogram(
+            cqt_spec = librosa.cqt(
                 y=audio_data,
                 sr=self.audio_sample_rate,
-                n_fft=self.audio_n_fft,
                 hop_length=self.audio_hop_length,
-                n_mels=self.audio_n_mels,
+                fmin=self.audio_cqt_fmin,
+                n_bins=self.audio_n_cqt_bins,
+                bins_per_octave=self.audio_cqt_bins_per_octave,
             )
-            log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
-            input_features = torch.tensor(log_mel_spec, dtype=torch.float32)
+            log_cqt_spec = librosa.amplitude_to_db(np.abs(cqt_spec), ref=np.max)
+            input_features = torch.tensor(log_cqt_spec, dtype=torch.float32)
         else:
             precomputed_features_path = feature_source_path
-            input_features = torch.load(precomputed_features_path, weights_only=True)
+            input_features = torch.load(precomputed_features_path, weights_only=False)
 
         if self.enable_specaugment:
             input_features = input_features.unsqueeze(0)
@@ -308,16 +337,20 @@ def create_frame_level_labels(
     )
     fret_targets_matrix = torch.full(
         (num_audio_frames, num_guitar_strings),
-        fret_max_value + config.FRET_SILENCE_CLASS_OFFSET,
+        fret_max_value
+        + config.FRET_SILENCE_CLASS_OFFSET,
         dtype=torch.long,
     )
+
     time_duration_per_frame = frame_hop_length / audio_sr
 
     if raw_annotation_tensor is not None and raw_annotation_tensor.numel() > 0:
         for i in range(raw_annotation_tensor.shape[0]):
             onset_time_sec = raw_annotation_tensor[i, 0].item()
             offset_time_sec = raw_annotation_tensor[i, 1].item()
-            string_index_val = int(raw_annotation_tensor[i, 2].item())
+            string_index_val = int(
+                raw_annotation_tensor[i, 2].item()
+            )
             fret_number_val = int(raw_annotation_tensor[i, 3].item())
 
             onset_frame_idx = min(
@@ -338,13 +371,16 @@ def create_frame_level_labels(
             encoded_fret_value = (
                 min(fret_number_val, fret_max_value)
                 if fret_number_val >= 0
-                else (fret_max_value + config.FRET_SILENCE_CLASS_OFFSET)
+                else (
+                    fret_max_value + config.FRET_SILENCE_CLASS_OFFSET
+                )
             )
 
-            for current_frame_idx in range(onset_frame_idx, offset_frame_idx + 1):
+            for current_frame_idx in range(
+                onset_frame_idx, offset_frame_idx + 1
+            ):
                 if current_frame_idx < num_audio_frames:
                     fret_targets_matrix[current_frame_idx, string_index_val] = (
                         encoded_fret_value
                     )
-
     return onset_targets_matrix, fret_targets_matrix
