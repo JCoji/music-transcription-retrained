@@ -22,8 +22,10 @@
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Porównanie fragmentu zapisu nutowego i odpowiadającej mu tabulatury gitarowej dla motywu muzycznego.}}{3}{figure.caption.8}%
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Schematyczny przykład spektrogramu polifonicznego sygnału gitarowego, ukazujący nakładające się struktury harmoniczne (prążki reprezentujące częstotliwość podstawową i jej alikwoty) dla kilku jednocześnie brzmiących nut.}}{4}{figure.caption.9}%
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
@@ -63,6 +65,15 @@
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Po lewej: fragment sygnału audio pojedynczego dźwięku gitary w dziedzinie czasu. Po prawej: odpowiadające mu widmo amplitudowe uzyskane za pomocą transformaty Fouriera, ukazujące częstotliwość podstawową ($F_0$) oraz jej kolejne alikwoty (składowe harmoniczne).}}{14}{figure.caption.10}%
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Wizualizacja różnych reprezentacji czasowo-częstotliwościowych dla tego samego polifonicznego fragmentu gitarowego: (a) Spektrogram STFT z liniową skalą częstotliwości, (b) Spektrogram Constant-Q (CQT) z logarytmiczną skalą częstotliwości, (c) Mel-spektrogram z osią częstotliwości w skali Mel.}}{15}{figure.caption.11}%
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\babel@toc {british}{}\relax 
+\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Uproszczony schemat potoku przetwarzania w systemie ATM: od sygnału audio, poprzez ekstrakcję cech, zadania składowe (MPE, detekcja onsetów/offsetów, estymacja instrumentu), aż po generowanie wyjściowej reprezentacji symbolicznej na różnych poziomach abstrakcji (ramki, nuty, partytura).}}{17}{figure.caption.12}%
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
@@ -97,7 +108,6 @@
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
-\contentsline {table}{\numberline {2.1}{\ignorespaces Wybrane techniki gitarowe i ich manifestacje akustyczne}}{21}{table.2.1}%
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
@@ -114,13 +124,7 @@
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\contentsline {table}{\numberline {2.2}{\ignorespaces Porównanie Standardowej Notacji Muzycznej i Tabulatury Gitarowej}}{23}{table.caption.16}%
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Przykład tej samej nuty (E4, MIDI 64) możliwej do zagrania w wielu pozycjach na gryfie gitary standardowo strojonej. Ilustracja przedstawia dźwięk E4 na strunie G (9. próg), strunie B (5. próg) oraz pustej strunie wysokiej E. Obrazuje to fundamentalne wyzwanie estymacji opalcowania w GTT. Źródło: \blx@tocontentsinit {0}\autocite {obrazGitaraNiejednoznacznosc}}}{25}{figure.caption.17}%
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \babel@toc {british}{}\relax 
@@ -132,24 +136,8 @@
 \babel@toc {british}{}\relax 
 \babel@toc {polish}{}\relax 
 \addvspace {10\p@ }
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
-\babel@toc {british}{}\relax 
-\babel@toc {polish}{}\relax 
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Wizualizacja etykiet ramkowych dla fragmentu utworu. Górny panel przedstawia macierz onsetów, gdzie pionowe linie oznaczają moment rozpoczęcia nuty na danej strunie. Dolny panel pokazuje macierz aktywności progów, gdzie czarne obszary reprezentują czas trwania dźwięku na danej strunie.}}{34}{figure.caption.21}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Schemat architektury zaimplementowanego modelu CRNN. Przedstawia przepływ danych od wejściowego tensora spektrogramu, przez frontend konwolucyjny, backend rekurencyjny, aż po rozdzielenie na dwie głowice wyjściowe dla predykcji onsetów i progów.}}{37}{figure.caption.23}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
