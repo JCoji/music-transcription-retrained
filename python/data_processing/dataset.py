@@ -13,7 +13,6 @@ def _augment_time_stretch(audio_data, stretch_rate, current_raw_labels):
     adjusted_labels = current_raw_labels
     if current_raw_labels is not None and current_raw_labels.numel() > 0:
         adjusted_labels = current_raw_labels.clone()
-        # Kolumny 0 (onset) i 1 (offset) są w sekundach
         adjusted_labels[:, 0] /= stretch_rate
         adjusted_labels[:, 1] /= stretch_rate
     return stretched_audio, adjusted_labels
@@ -59,18 +58,15 @@ class GuitarSetTabDataset(Dataset):
         self.current_split_data_dir = os.path.join(
             self.processed_data_base_dir, self.data_split_name
         )
-
         self.audio_sample_rate = audio_sample_rate
         self.audio_hop_length = audio_hop_length
         self.max_fret_value = max_fret_value
         self.audio_n_cqt_bins = audio_n_cqt_bins
         self.audio_cqt_bins_per_octave = audio_cqt_bins_per_octave
         self.audio_cqt_fmin = audio_cqt_fmin
-
         self.label_transform_function = label_transform_function
         self.guitarset_data_home = guitarset_data_home
         self.guitarset_loader_instance = None
-
         self.enable_audio_augmentations = (
             enable_audio_augmentations if self.data_split_name == "train" else False
         )
@@ -83,23 +79,15 @@ class GuitarSetTabDataset(Dataset):
             self.guitarset_loader_instance = mirdata.initialize(
                 "guitarset", data_home=self.guitarset_data_home
             )
-            if (
-                not self.guitarset_loader_instance.track_ids
-            ):  # Użyj .track_ids zamiast .tracks
+            if not self.guitarset_loader_instance.track_ids:
                 raise RuntimeError(
                     f"mirdata.GuitarSet nie znalazł żadnych utworów w guitarset_data_home='{self.guitarset_data_home}'."
                 )
 
-        self.feature_sources = (
-            []
-        )
+        self.feature_sources = []
         self.label_file_paths = []
-        self.base_track_ids = (
-            []
-        )
-        self.full_track_ids = (
-            []
-        )
+        self.base_track_ids = []
+        self.full_track_ids = []
 
         ids_list_file_path = os.path.join(
             self.processed_data_base_dir, f"{self.data_split_name}_ids.txt"
@@ -108,15 +96,11 @@ class GuitarSetTabDataset(Dataset):
             raise FileNotFoundError(
                 f"Plik z ID dla splitu '{data_split_name}' nie został znaleziony: {ids_list_file_path}"
             )
-
         with open(ids_list_file_path, "r") as f_ids:
             for line_content in f_ids:
-                full_track_id_from_file = (
-                    line_content.strip()
-                )
+                full_track_id_from_file = line_content.strip()
                 if not full_track_id_from_file:
                     continue
-
                 base_track_id_for_filename = os.path.splitext(
                     os.path.basename(full_track_id_from_file)
                 )[0]
@@ -124,19 +108,10 @@ class GuitarSetTabDataset(Dataset):
                     self.current_split_data_dir,
                     f"{base_track_id_for_filename}_labels.pt",
                 )
-
                 if not os.path.exists(label_file_path):
                     continue
-
-                if (
-                    self.enable_audio_augmentations
-                ):
-                    if (
-                        self.guitarset_loader_instance is None
-                    ):
-                        print(
-                            f"Krytyczne: guitarset_loader_instance nie jest zainicjalizowany dla {full_track_id_from_file}"
-                        )
+                if self.enable_audio_augmentations:
+                    if self.guitarset_loader_instance is None:
                         continue
                     try:
                         track_metadata = self.guitarset_loader_instance.track(
@@ -157,9 +132,7 @@ class GuitarSetTabDataset(Dataset):
                             audio_source_path = track_metadata.audio_mic_path
 
                         if audio_source_path:
-                            self.feature_sources.append(
-                                audio_source_path
-                            )
+                            self.feature_sources.append(audio_source_path)
                             self.label_file_paths.append(label_file_path)
                             self.base_track_ids.append(base_track_id_for_filename)
                             self.full_track_ids.append(full_track_id_from_file)
@@ -175,9 +148,7 @@ class GuitarSetTabDataset(Dataset):
                         f"{base_track_id_for_filename}_features.pt",
                     )
                     if os.path.exists(feature_file_path):
-                        self.feature_sources.append(
-                            feature_file_path
-                        )
+                        self.feature_sources.append(feature_file_path)
                         self.label_file_paths.append(label_file_path)
                         self.base_track_ids.append(base_track_id_for_filename)
                         self.full_track_ids.append(full_track_id_from_file)
@@ -188,7 +159,6 @@ class GuitarSetTabDataset(Dataset):
         self.aug_noise_level_limits = aug_noise_level_limits
         self.aug_p_random_gain = aug_p_random_gain
         self.aug_gain_limits = aug_gain_limits
-
         self.enable_specaugment = (
             enable_specaugment if self.data_split_name == "train" else False
         )
@@ -208,7 +178,6 @@ class GuitarSetTabDataset(Dataset):
             self.specaugment_transform_op = torch.nn.Sequential(
                 *(time_masks + freq_masks)
             )
-
         if not self.feature_sources:
             print(
                 f"Ostrzeżenie: Brak plików danych dla splitu '{self.data_split_name}' w '{self.current_split_data_dir}'. Dataset będzie pusty."
@@ -225,16 +194,10 @@ class GuitarSetTabDataset(Dataset):
 
         feature_source_path = self.feature_sources[item_idx]
         labels_file_path = self.label_file_paths[item_idx]
-
-        loaded_raw_labels = torch.load(
-            labels_file_path, weights_only=False
-        )
-
+        loaded_raw_labels = torch.load(labels_file_path, weights_only=False)
         labels_for_transform = loaded_raw_labels
 
-        if (
-            self.enable_audio_augmentations
-        ):
+        if self.enable_audio_augmentations:
             audio_file_path = feature_source_path
             audio_data, sr_loaded = librosa.load(
                 audio_file_path, sr=self.audio_sample_rate, mono=True
@@ -245,11 +208,8 @@ class GuitarSetTabDataset(Dataset):
                 )
 
             current_labels_for_stretch = loaded_raw_labels
-
             if np.random.rand() < self.aug_p_time_stretch:
-                if (
-                    current_labels_for_stretch is loaded_raw_labels
-                ):
+                if current_labels_for_stretch is loaded_raw_labels:
                     current_labels_for_stretch = loaded_raw_labels.clone()
                 stretch_factor_val = np.random.uniform(
                     self.aug_time_stretch_limits[0], self.aug_time_stretch_limits[1]
@@ -259,13 +219,11 @@ class GuitarSetTabDataset(Dataset):
                 )
 
             labels_for_transform = current_labels_for_stretch
-
             if np.random.rand() < self.aug_p_random_gain:
                 gain_factor_val = np.random.uniform(
                     self.aug_gain_limits[0], self.aug_gain_limits[1]
                 )
                 audio_data = _augment_random_gain(audio_data, gain_factor_val)
-
             if np.random.rand() < self.aug_p_add_noise:
                 noise_level_val = np.random.uniform(
                     self.aug_noise_level_limits[0], self.aug_noise_level_limits[1]
@@ -303,10 +261,13 @@ class GuitarSetTabDataset(Dataset):
             else labels_for_transform
         )
 
+        track_id = self.full_track_ids[item_idx]
+
         return (
             input_features,
             output_labels_tuple,
             loaded_raw_labels,
+            track_id,
         )
 
     def get_full_track_id_for_item(self, item_idx):
@@ -325,34 +286,24 @@ def create_frame_level_labels(
     fret_max_value,
 ):
     if frame_hop_length is None or audio_sr is None or fret_max_value is None:
-        raise ValueError(
-            "Brakujące parametry frame_hop_length, audio_sr lub fret_max_value w create_frame_level_labels"
-        )
-
+        raise ValueError("Brakujące parametry w create_frame_level_labels")
     num_audio_frames = feature_map_tensor.shape[1]
     num_guitar_strings = config.DEFAULT_NUM_STRINGS
-
     onset_targets_matrix = torch.zeros(
         (num_audio_frames, num_guitar_strings), dtype=torch.float32
     )
     fret_targets_matrix = torch.full(
         (num_audio_frames, num_guitar_strings),
-        fret_max_value
-        + config.FRET_SILENCE_CLASS_OFFSET,
+        fret_max_value + config.FRET_SILENCE_CLASS_OFFSET,
         dtype=torch.long,
     )
-
     time_duration_per_frame = frame_hop_length / audio_sr
-
     if raw_annotation_tensor is not None and raw_annotation_tensor.numel() > 0:
         for i in range(raw_annotation_tensor.shape[0]):
             onset_time_sec = raw_annotation_tensor[i, 0].item()
             offset_time_sec = raw_annotation_tensor[i, 1].item()
-            string_index_val = int(
-                raw_annotation_tensor[i, 2].item()
-            )
+            string_index_val = int(raw_annotation_tensor[i, 2].item())
             fret_number_val = int(raw_annotation_tensor[i, 3].item())
-
             onset_frame_idx = min(
                 max(0, int(round(onset_time_sec / time_duration_per_frame))),
                 num_audio_frames - 1,
@@ -361,24 +312,16 @@ def create_frame_level_labels(
                 max(0, int(round(offset_time_sec / time_duration_per_frame))),
                 num_audio_frames - 1,
             )
-
             if not (0 <= string_index_val < num_guitar_strings):
                 continue
-
             if onset_frame_idx < num_audio_frames:
                 onset_targets_matrix[onset_frame_idx, string_index_val] = 1.0
-
             encoded_fret_value = (
                 min(fret_number_val, fret_max_value)
                 if fret_number_val >= 0
-                else (
-                    fret_max_value + config.FRET_SILENCE_CLASS_OFFSET
-                )
+                else (fret_max_value + config.FRET_SILENCE_CLASS_OFFSET)
             )
-
-            for current_frame_idx in range(
-                onset_frame_idx, offset_frame_idx + 1
-            ):
+            for current_frame_idx in range(onset_frame_idx, offset_frame_idx + 1):
                 if current_frame_idx < num_audio_frames:
                     fret_targets_matrix[current_frame_idx, string_index_val] = (
                         encoded_fret_value
