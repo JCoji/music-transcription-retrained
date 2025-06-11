@@ -8,3 +8,6 @@ pretty_midi>=0.2.10
 jams~=0.3.4
 ipython~=8.18.1
 nnAudio~=0.3.3
+torch~=2.5.1+cu121
+noisereduce~=3.0.3
+torchaudio~=2.5.1+cu121

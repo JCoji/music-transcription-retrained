@@ -1,21 +1,15 @@
-# model/utils.py
-
 import os
 import torch
 import traceback
 
 
 def load_best_model(model_class, model_init_params, model_path, device):
-    """
-    Ładuje wagi modelu z pliku, obsługując błędy inicjalizacji i niezgodności wag.
-    """
     if not os.path.exists(model_path):
         print(f"BŁĄD KRYTYCZNY: Nie znaleziono pliku modelu w '{model_path}'")
         return None
 
     print(f"--- Próba załadowania modelu z pliku: {os.path.basename(model_path)} ---")
 
-    # Krok 1: Inicjalizacja modelu z prawidłowymi parametrami
     try:
         print(f"Klasa modelu: {model_class.__name__}")
         print(f"Parametry inicjalizacyjne: {model_init_params}")
@@ -28,12 +22,10 @@ def load_best_model(model_class, model_init_params, model_path, device):
         traceback.print_exc()
         return None
 
-    # Krok 2: Ładowanie wag (state_dict)
     try:
         print(f"Ładowanie wag na urządzenie: {device.type}")
-        state_dict = torch.load(model_path, map_location=device)
+        state_dict = torch.load(model_path, map_location=device, weights_only=True)
 
-        # Opcjonalnie: usuń prefiks 'module.', jeśli model był trenowany z DataParallel
         if list(state_dict.keys())[0].startswith("module."):
             state_dict = {k[7:]: v for k, v in state_dict.items()}
 
