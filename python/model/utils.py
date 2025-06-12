@@ -1,28 +1,54 @@
 import os
 import torch
 import traceback
+import json
+from model import (
+    architecture,
+)
 
 
-def load_best_model(model_class, model_init_params, model_path, device):
+def load_best_model(model_class, model_path, run_config_path, device):
     if not os.path.exists(model_path):
         print(f"BŁĄD KRYTYCZNY: Nie znaleziono pliku modelu w '{model_path}'")
+        return None
+    if not os.path.exists(run_config_path):
+        print(
+            f"BŁĄD KRYTYCZNY: Nie znaleziono pliku konfiguracyjnego w '{run_config_path}'"
+        )
         return None
 
     print(f"--- Próba załadowania modelu z pliku: {os.path.basename(model_path)} ---")
 
     try:
-        print(f"Klasa modelu: {model_class.__name__}")
-        print(f"Parametry inicjalizacyjne: {model_init_params}")
-        loaded_model = model_class(**model_init_params)
-    except Exception as e:
-        print(
-            f"\nBŁĄD KRYTYCZNY podczas inicjalizacji modelu klasą '{model_class.__name__}': {e}"
-        )
-        print("Sprawdź, czy parametry przekazywane do konstruktora są poprawne.")
-        traceback.print_exc()
-        return None
+        with open(run_config_path, "r", encoding="utf-8") as f:
+            run_config = json.load(f)
 
-    try:
+        hyperparams = run_config["hyperparameters_tuned"]
+        static_params = run_config["static_parameters"]
+
+        temp_cnn_model = architecture.TabCNN()
+        with torch.no_grad():
+            n_bins_cqt = static_params.get(
+                "N_BINS_CQT", 168
+            )
+            dummy_input = torch.randn(1, 1, n_bins_cqt, 32)
+            cnn_output = temp_cnn_model(dummy_input)
+            calculated_cnn_out_dim = cnn_output.shape[1] * cnn_output.shape[2]
+        del temp_cnn_model
+
+        model_init_params = {
+            "num_frames_rnn_input_dim": calculated_cnn_out_dim,
+            "rnn_type": hyperparams.get("RNN_TYPE", "LSTM"),
+            "rnn_hidden_size": hyperparams["RNN_HIDDEN_SIZE"],
+            "rnn_layers": hyperparams["RNN_LAYERS"],
+            "rnn_dropout": hyperparams["RNN_DROPOUT"],
+            "rnn_bidirectional": hyperparams.get("RNN_BIDIRECTIONAL", False),
+        }
+
+        print(f"Odtworzone parametry inicjalizacyjne: {model_init_params}")
+
+        loaded_model = model_class(**model_init_params)
+
         print(f"Ładowanie wag na urządzenie: {device.type}")
         state_dict = torch.load(model_path, map_location=device, weights_only=True)
 
@@ -37,11 +63,6 @@ def load_best_model(model_class, model_init_params, model_path, device):
         return loaded_model
 
     except Exception as e:
-        print(
-            f"\nBŁĄD KRYTYCZNY podczas ładowania wag (state_dict) z '{model_path}': {e}"
-        )
-        print(
-            "Najczęstszą przyczyną jest niezgodność architektury modelu w pamięci z tą zapisaną w pliku."
-        )
+        print(f"\nBŁĄD KRYTYCZNY podczas procesu ładowania modelu: {e}")
         traceback.print_exc()
         return None
