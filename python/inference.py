@@ -54,8 +54,8 @@ def predict_tablature_from_audio_file(model, audio_file_path, device, config_obj
 
 
 def run_inference_on_directory(
+    config_path,
     model_class,
-    model_init_params,
     model_path,
     audio_dir,
     output_dir,
@@ -63,7 +63,10 @@ def run_inference_on_directory(
     config_obj,
 ):
     loaded_model = model_utils.load_best_model(
-        model_class, model_init_params, model_path, device
+        model_class=model_class,
+        model_path=model_path,
+        run_config_path=config_path,
+        device=device
     )
     if loaded_model is None:
         print("Nie udało się załadować modelu. Przerwanie działania.")

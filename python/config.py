@@ -15,8 +15,8 @@ MAX_FRETS = 20
 
 # --- Parametry CQT (dostosowane do potencjalnie najlepszej konfiguracji) ---
 FMIN_CQT = librosa.note_to_hz('E2') # Najniższy dźwięk gitary E2 (MIDI 40)
-N_BINS_CQT = 168                     # Zwiększone do 192 (jak w artykule SynthTab)
-BINS_PER_OCTAVE_CQT = 24            # Zwiększone do 24 (jak w artykule SynthTab)
+N_BINS_CQT = 168
+BINS_PER_OCTAVE_CQT = 24
 
 # --- Parametry Podziału Danych i Preprocessingu ---
 OPEN_STRING_PITCHES_JAMS = {0: 40, 1: 45, 2: 50, 3: 55, 4: 59, 5: 64}
@@ -71,10 +71,8 @@ CNN_OUTPUT_CHANNELS_LIST_DEFAULT = [32, 64, 128, 128, 128]
 CNN_KERNEL_SIZES_DEFAULT = [(3, 3), (3, 3), (3, 3), (3, 3), (3, 3)]
 CNN_STRIDES_DEFAULT = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
 CNN_PADDINGS_DEFAULT = [(1, 1), (1, 1), (1, 1), (1, 1), (1, 1)]
-# Dla N_BINS_CQT = 168: 168 -> 84 -> 42 -> 21 -> 10 (ostatni pooling /2) -> 10 (ostatni pooling 1x1)
-# Więc 4 warstwy poolingu 2x1.
 CNN_POOLING_KERNELS_DEFAULT = [(2,1), (2,1), (2,1), (2,1), (1,1)]
-CNN_POOLING_STRIDES_DEFAULT = [(2,1), (2,1), (2,1), (2,1), (1,1)] #
+CNN_POOLING_STRIDES_DEFAULT = [(2,1), (2,1), (2,1), (2,1), (1,1)]
 DEFAULT_NUM_STRINGS = 6
 
 # --- Ustawienia MIDI ---
@@ -117,3 +115,26 @@ BATCH_SIZE_DEFAULT = 2
 FRET_LOSS_WEIGHT_DEFAULT = 1.0
 EARLY_STOPPING_PATIENCE_DEFAULT = 25
 CHECKPOINT_METRIC_DEFAULT = 'val_tdr_f1'
+
+# --- Augmentacja: Pogłos (Reverb) oparta na Scipy ---
+DATASET_TRAIN_AUGMENTATION_REVERB_PARAMS = {
+    "enabled": True,
+    "probability": 0.4,
+    "decay_seconds_range": [0.10, 0.45],  # Zakres losowania czasu pogłosu
+    "wet_level_range": [0.1, 0.35],        # Zakres losowania "ilości" pogłosu
+}
+
+# --- Augmentacja: Korektor (EQ) oparta na Scipy ---
+DATASET_TRAIN_AUGMENTATION_EQ_PARAMS = {
+    "enabled": True,
+    "probability": 0.5,
+    "low_cutoff_hz_range": [250, 400],   # Zakres losowania dolnej częstotliwości
+    "high_cutoff_hz_range": [3000, 4500], # Zakres losowania górnej częstotliwości
+}
+
+# --- Augmentacja: Clipping (Przesterowanie) ---
+DATASET_TRAIN_AUGMENTATION_CLIPPING_PARAMS = {
+    "enabled": True,
+    "probability": 0.3,
+    "threshold_range": [0.5, 0.9] # Zakres losowania progu obcięcia sygnału
+}

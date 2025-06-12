@@ -5,8 +5,9 @@ import librosa
 import numpy as np
 import torchaudio
 import mirdata
+import random
+from scipy.signal import convolve, iirfilter, lfilter
 import config
-
 
 def _augment_time_stretch(audio_data, stretch_rate, current_raw_labels):
     stretched_audio = librosa.effects.time_stretch(y=audio_data, rate=stretch_rate)
@@ -26,6 +27,41 @@ def _augment_add_noise(audio_data, noise_amplitude):
 def _augment_random_gain(audio_data, gain_value):
     return audio_data * gain_value
 
+
+def _augment_reverb(audio_data, sample_rate):
+    params = config.DATASET_TRAIN_AUGMENTATION_REVERB_PARAMS
+    if params["enabled"] and random.random() < params["probability"]:
+        decay_seconds = random.uniform(*params["decay_seconds_range"])
+        wet_level = random.uniform(*params["wet_level_range"])
+        decay_samples = int(decay_seconds * sample_rate)
+        if decay_samples <= 0:
+            return audio_data
+        impulse_response = np.random.randn(decay_samples) * np.exp(-np.linspace(0, 5, decay_samples))
+        reverbed_audio = convolve(audio_data, impulse_response, mode="same")
+        reverbed_audio_norm = (reverbed_audio / (np.max(np.abs(reverbed_audio)) + 1e-8)) * np.max(np.abs(audio_data))
+        mixed_audio = (1 - wet_level) * audio_data + wet_level * reverbed_audio_norm
+        return mixed_audio.astype(audio_data.dtype)
+    return audio_data
+
+
+def _augment_eq(audio_data, sample_rate):
+    params = config.DATASET_TRAIN_AUGMENTATION_EQ_PARAMS
+    if params["enabled"] and random.random() < params["probability"]:
+        nyquist = 0.5 * sample_rate
+        low = random.uniform(*params["low_cutoff_hz_range"]) / nyquist
+        high = random.uniform(*params["high_cutoff_hz_range"]) / nyquist
+        if low >= high: return audio_data # Zabezpieczenie
+        b, a = iirfilter(N=4, Wn=[low, high], btype="band", ftype="butter")
+        filtered_audio = lfilter(b, a, audio_data)
+        return filtered_audio.astype(audio_data.dtype)
+    return audio_data
+
+def _augment_clipping(audio_data):
+    params = config.DATASET_TRAIN_AUGMENTATION_CLIPPING_PARAMS
+    if params["enabled"] and random.random() < params["probability"]:
+        clip_threshold = random.uniform(*params["threshold_range"])
+        return np.clip(audio_data, -clip_threshold, clip_threshold)
+    return audio_data
 
 class GuitarSetTabDataset(Dataset):
     def __init__(
@@ -229,6 +265,10 @@ class GuitarSetTabDataset(Dataset):
                     self.aug_noise_level_limits[0], self.aug_noise_level_limits[1]
                 )
                 audio_data = _augment_add_noise(audio_data, noise_level_val)
+
+            audio_data = _augment_reverb(audio_data, self.audio_sample_rate)
+            audio_data = _augment_eq(audio_data, self.audio_sample_rate)
+            audio_data = _augment_clipping(audio_data)
 
             cqt_spec = librosa.cqt(
                 y=audio_data,

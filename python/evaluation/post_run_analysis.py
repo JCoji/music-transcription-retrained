@@ -13,7 +13,7 @@ def find_optimal_threshold_for_tdr(
     best_f1, optimal_threshold = -1.0, config.DEFAULT_TDR_THRESHOLD
     thresholds = np.arange(
         config_obj.TDR_THRESH_SEARCH_MIN,
-        config_obj.TDR_THRESH_SEARCH_MAX + config_obj.ONSET_THRESH_SEARCH_STEP,
+        config_obj.TDR_THRESH_SEARCH_MAX + config_obj.TDR_THRESH_SEARCH_STEP,
         config_obj.TDR_THRESH_SEARCH_STEP,
     )
     for threshold in tqdm(thresholds, desc="Optymalizacja progu TDR"):

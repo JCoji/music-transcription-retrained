@@ -109,11 +109,18 @@ def run_training_loop(
             log_file_handle.flush()
             print(log_text_chunk)
 
+            effective_checkpoint_metric = checkpoint_metric_to_track
+            if effective_checkpoint_metric not in val_epoch_all_metrics:
+                corrected_metric_key = f"{effective_checkpoint_metric}_at_0.5"
+                if corrected_metric_key in val_epoch_all_metrics:
+                    effective_checkpoint_metric = corrected_metric_key
+
             metric_value_for_checkpoint = val_epoch_all_metrics.get(
-                checkpoint_metric_to_track, float("-inf")
+                effective_checkpoint_metric, float("-inf")
             )
+
             scheduler_mode = (
-                "max" if "loss" not in checkpoint_metric_to_track.lower() else "min"
+                "max" if "loss" not in effective_checkpoint_metric.lower() else "min"
             )
             if scheduler_instance:
                 scheduler_instance.step(metric_value_for_checkpoint)
@@ -131,13 +138,13 @@ def run_training_loop(
                     os.path.join(artifacts_output_dir, "best_model.pth"),
                 )
                 print(
-                    f"    -> Zapisano nowy najlepszy model ({checkpoint_metric_to_track}: {best_tracked_metric_val:.4f})"
+                    f"    -> Zapisano nowy najlepszy model ({effective_checkpoint_metric}: {best_tracked_metric_val:.4f})"
                 )
             else:
                 epochs_without_improvement += 1
                 if epochs_without_improvement >= early_stop_patience_val:
                     print(
-                        f"\n    Wczesne zatrzymanie treningu po {epochs_without_improvement} epokach bez poprawy dla '{checkpoint_metric_to_track}'."
+                        f"\n    Wczesne zatrzymanie treningu po {epochs_without_improvement} epokach bez poprawy dla '{effective_checkpoint_metric}'."
                     )
                     break
 
@@ -161,7 +168,6 @@ def process_single_hyperparameter_run(
     train_loader,
     validation_loader,
     test_loader,
-    jupyter_notebook_clear_output_func,
 ):
     run_start_time = time.time()
 
@@ -316,14 +322,18 @@ def process_single_hyperparameter_run(
             print("Zakończono ewaluację na zbiorze testowym.")
 
     stopped_at_epoch = len(training_run_history.get("train_total_loss", []))
-    tracked_metric_history = training_run_history.get(
-        config_obj.CHECKPOINT_METRIC_DEFAULT, []
-    )
+
+    final_checkpoint_metric_key = config_obj.CHECKPOINT_METRIC_DEFAULT
+    if f"{final_checkpoint_metric_key}_at_0.5" in training_run_history:
+        final_checkpoint_metric_key = f"{final_checkpoint_metric_key}_at_0.5"
+
+    tracked_metric_history = training_run_history.get(final_checkpoint_metric_key, [])
+
     best_val_metric_final = 0.0
     if tracked_metric_history:
         best_val_metric_final = (
             max(tracked_metric_history)
-            if "loss" not in config_obj.CHECKPOINT_METRIC_DEFAULT.lower()
+            if "loss" not in final_checkpoint_metric_key.lower()
             else min(tracked_metric_history)
         )
 

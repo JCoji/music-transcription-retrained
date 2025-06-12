@@ -1,7 +1,5 @@
 import os
-import torch
 import config
-from tqdm import tqdm
 
 
 def _generate_tablature_matrix_slots(
