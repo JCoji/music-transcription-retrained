@@ -1,10 +1,49 @@
+\chapter{Podsumowanie i Wnioski}
+\label{chap:podsumowanie}
 
-\chapter{Podsumowanie}
+Niniejsza praca magisterska podjęła się realizacji kompleksowego zadania, jakim było zaprojektowanie, zaimplementowanie i~weryfikacja eksperymentalna systemu do automatycznej transkrypcji polifonicznych nagrań gitarowych na zapis tabulaturowy (GTT) przy użyciu metod głębokiego uczenia. Praca stanowiła pełny cykl projektu naukowo-badawczego, od studiów literaturowych i~analizy problemu, poprzez projektowanie i~implementację innowacyjnego rozwiązania, aż po jego wszechstronną ewaluację i~analizę wyników.
 
-%\begin{itemize}
-%\item Jaki problem rozwiązałæm?
-%\item Jak ten problem rozwiązałæm?
-%\item Jakie są dobre i słabe strony mojego rozwiązania?
-%\item Czy mogę sformułować jakieś rekomendacje?
-%\end{itemize}
+\section{Streszczenie Zrealizowanych Prac}
+\label{sec:streszczenie_prac}
 
+Realizację postawionych celów rozpoczęto od szczegółowej analizy literatury (Rozdział \ref{chap:analiza_tematu}), która pozwoliła na ugruntowanie teoretycznych podstaw dotyczących cyfrowego przetwarzania sygnałów, metod uczenia maszynowego w~kontekście Automatycznej Transkrypcji Muzycznej (ATM) oraz zidentyfikowanie specyficznych wyzwań związanych z~transkrypcją gitary. Analiza ta potwierdziła, że GTT, ze względu na polifonię, zmienność barwy, techniki artykulacyjne i~problem niejednoznaczności opalcowania, pozostaje jednym z~otwartych i~wymagających problemów w~dziedzinie \textit{Music Information Retrieval} (MIR)~\autocite{Benetos2019AutomaticMusicTranscription, Wiggins2019TabCNN}.
+
+W oparciu o te fundamenty, w Rozdziale \ref{chap:przedmiot_pracy} zaprojektowano i~zaimplementowano autorski system oparty na konwolucyjno-rekurencyjnej sieci neuronowej (CRNN). System ten, zrealizowany w~środowisku PyTorch, został zaprojektowany w~sposób modułowy, umożliwiając elastyczne zarządzanie potokiem przetwarzania danych, treningiem i~ewaluacją. Kluczowym elementem rozwiązania była zdolność do przetwarzania różnych reprezentacji czasowo-częstotliwościowych (Mel-spektrogramy, CQT) oraz implementacja wielozadaniowego uczenia, polegającego na jednoczesnej predykcji momentów rozpoczęcia nut (onsetów) i~aktywności progów na poszczególnych strunach.
+
+Rozdział \ref{chap:badania} stanowił dokumentację iteracyjnego procesu badawczego, w~ramach którego przeprowadzono ponad 70 eksperymentów. Proces ten ujawnił, że kluczem do osiągnięcia przełomowych wyników nie była dalsza optymalizacja architektury, lecz radykalna zmiana w~podejściu do danych treningowych. Zaimplementowano zaawansowaną strategię augmentacji, symulującą niedoskonałości nagrań domowych, takie jak pogłos, zniekształcenia mikrofonowe czy przesterowanie sygnału. Finalnie, najlepszy model został poddany wszechstronnej ewaluacji ilościowej i~jakościowej na zbiorze testowym GuitarSet.
+
+\section{Wnioski Końcowe}
+\label{sec:wnioski_koncowe}
+
+Przeprowadzone badania i~analiza wyników pozwalają na sformułowanie następujących, kluczowych wniosków, które syntetyzują wkład niniejszej pracy w~dziedzinę automatycznej transkrypcji gitarowej.
+
+\begin{enumerate}
+    \item \textbf{Osiągnięcie wyników przewyższających stan wiedzy w~ramkowej estymacji tabulatur:} Zaimplementowany i~wytrenowany system transkrypcji gitarowej osiągnął na zbiorze testowym GuitarSet wynik \textbf{MPE F1-Score na poziomie 0.8736}. Jest to rezultat, który, przy zachowaniu metodologicznej poprawności porównania na poziomie ramek, przewyższa wyniki raportowane w~kluczowych pracach w~tej dziedzinie dla modeli trenowanych wyłącznie na tym zbiorze danych, takich jak TabCNN (F1-Score 0.76)~\autocite{Wiggins2019TabCNN} czy modele bazowe z~pracy nad SynthTab (F1-Score ok. 0.835)~\autocite{Zang2023SynthTab}. Uzyskany wynik praktycznej metryki na poziomie nut, \textbf{TDR F1-Score, wynoszący 0.8569}, świadczy o~bardzo wysokiej jakości i~użyteczności generowanych tabulatur. \textbf{Tym samym, główny cel pracy, polegający na zaprojektowaniu i~weryfikacji skutecznego systemu GTT, został w~pełni zrealizowany i~udokumentowany.}
+
+    \item \textbf{Decydujący wpływ zaawansowanej, data-centrycznej strategii augmentacji:} Najważniejszym i~najbardziej fundamentalnym wnioskiem płynącym z~procesu badawczego jest stwierdzenie, że kluczem do sukcesu i~przełamania barier wydajnościowych nie okazały się subtelne modyfikacje architektury sieci neuronowej, lecz innowacyjna i~agresywna strategia augmentacji danych. Świadome "pogarszanie" idealnych, studyjnych danych treningowych poprzez symulację realistycznych, niedoskonałych warunków nagraniowych (pogłos, zniekształcenia mikrofonowe, przesterowanie) zmusiło model do nauki znacznie bardziej robustnych i~uogólnionych cech. Potwierdza to rosnące w~dziedzinie uczenia maszynowego przekonanie, że podejście data-centryczne (skupione na jakości i~różnorodności danych) często przynosi lepsze rezultaty niż podejście model-centryczne (skupione wyłącznie na architekturze)~\autocite{Jamshidi2024SurveyAMT}.
+
+    \item \textbf{Identyfikacja głównego wyzwania GTT jako problemu klasyfikacji barwy dźwięku:} Analiza jakościowa błędów, w~tym testy na nagraniach zewnętrznych, jednoznacznie wykazała, że głównym ograniczeniem opracowanego modelu nie jest estymacja wysokości dźwięku (rozpoznawanie numeru progu), lecz jego zdolność do precyzyjnej klasyfikacji barwy (ang. \textit{timbre}) w~celu poprawnego przypisania dźwięku do właściwej struny. Model często popełnia "inteligentne" błędy, prawidłowo identyfikując nutę, ale umieszczając ją na niewłaściwej strunie (ale na progu, który odpowiada tej samej wysokości muzycznej). Zjawisko to potwierdza, że problem inferencji opalcowania (ang. \textit{fingering estimation}), wynikający z~wieloznaczności gryfu gitarowego, pozostaje centralnym i~w dużej mierze nierozwiązanym wyzwaniem GTT~\autocite{Wiggins2019TabCNN}.
+
+    \item \textbf{Wysoka skuteczność w~transkrypcji partii akompaniamentu jako wskaźnik siły modelu w~MPE:} Zaobserwowano, że model osiąga paradoksalnie najwyższą skuteczność dla regularnych, rytmicznych partii akompaniamentu, nawet tych o~złożonej fakturze akordowej. Klarowność rytmiczna i~harmoniczna oraz stabilność dynamiczna takich partii czynią je dla algorytmu zadaniem łatwiejszym niż transkrypcja ekspresyjnych i~zmiennych partii solowych, obfitujących w~subtelne techniki artykulacyjne. Wysoka precyzja w~dekompozycji akordów na poszczególne nuty na właściwych strunach i~progach świadczy o~sile modelu w~podstawowym zadaniu wielodźwiękowej estymacji (MPE) dla sygnałów o~przewidywalnej strukturze.
+\end{enumerate}
+
+\section{Potencjalne Kierunki Dalszych Badań i Rozwoju}
+\label{sec:kierunki_rozwoju}
+
+Mimo osiągnięcia bardzo dobrych wyników, niniejsza praca otwiera szereg potencjalnych ścieżek dla dalszych badań i~rozwoju opracowanego systemu, adresując zidentyfikowane ograniczenia i~wyzwania.
+
+\begin{itemize}
+    \item \textbf{Rozwój metod inferencji opalcowania:} Biorąc pod uwagę zidentyfikowane ograniczenia w~klasyfikacji barwy, przyszłe prace powinny skupić się na rozwiązaniu problemu wieloznaczności gryfu. Możliwe kierunki obejmują:
+    \begin{itemize}
+        \item Wzbogacenie architektury sieci o~mechanizmy lepiej modelujące subtelne cechy barwy (np. przez zastosowanie bardziej zaawansowanych cech wejściowych lub specjalizowanych warstw w~sieci).
+        \item Opracowanie modułów post-processingu, które na podstawie wyjścia obecnego modelu stosowałyby optymalizację opartą na wiedzy muzycznej, np. modelach grywalności (ang. \textit{playability models}) czy typowych wzorcach opalcowania, korygując błędy w~przypisaniu nut do strun.
+    \end{itemize}
+
+    \item \textbf{Eksploracja transferu wiedzy i~danych syntetycznych:} Rozwój GTT jest hamowany przez ograniczoną dostępność dużych, adnotowanych zbiorów danych rzeczywistych. Obiecującym kierunkiem jest wykorzystanie ogromnych zbiorów danych syntetycznych, takich jak SynthTab~\autocite{Zang2023SynthTab}, do wstępnego treningu modeli (pre-training), a~następnie ich dostrajanie (ang. \textit{fine-tuning}) na mniejszych, ale autentycznych zbiorach, jak GuitarSet. Taki transfer wiedzy może znacząco poprawić zdolności generalizacyjne modeli, ucząc je najpierw ogólnych zasad akustyki gitary, a~następnie adaptując do niuansów rzeczywistych nagrań.
+
+    \item \textbf{Rozpoznawanie technik artykulacyjnych:} Obecny system koncentruje się na transkrypcji podstawowych zdarzeń nutowych. Istotnym rozszerzeniem funkcjonalnym byłoby dodanie zdolności do rozpoznawania i~notowania specyficznych technik gitarowych, takich jak podciągnięcia strun (ang. \textit{bends}), ślizgi (ang. \textit{slides}), techniki legato (ang. \textit{hammer-ons, pull-offs}) czy wibrato (ang. \textit{vibrato}). Wymagałoby to rozszerzenia modelu o~dodatkowe głowice predykcyjne oraz wykorzystania bardziej szczegółowo adnotowanych zbiorów danych, a~także pogłębionej analizy akustycznych manifestacji tych technik, opisanych w~literaturze~\autocite{Su2014SparseCepstral, Reboursiere2011GuitarController}.
+
+    \item \textbf{Optymalizacja pod kątem zastosowań czasu rzeczywistego:} Zaimplementowany system działa w~trybie offline. Adaptacja i~optymalizacja architektury modelu (np. poprzez zastąpienie dwukierunkowych warstw RNN jednokierunkowymi, redukcję liczby parametrów, kwantyzację modelu) pod kątem przetwarzania w~czasie rzeczywistym otworzyłaby drogę do szeregu praktycznych zastosowań, takich jak interaktywne narzędzia edukacyjne, systemy do ćwiczeń czy wtyczki do cyfrowych stacji roboczych audio (DAW).
+\end{itemize}
+
+Podsumowując, niniejsza praca nie tylko z powodzeniem zrealizowała postawiony cel badawczy, ale również wniosła wkład w~dziedzinę GTT, demonstrując, że strategiczne i~zaawansowane podejście do augmentacji danych może być kluczem do przełamania istniejących barier wydajnościowych. Wyniki te potwierdzają ogromny potencjał metod głębokiego uczenia w~rozwiązywaniu złożonych problemów z~zakresu przetwarzania sygnałów muzycznych i~wskazują obiecujące kierunki dla przyszłych innowacji.

@@ -185,6 +185,9 @@ def process_single_hyperparameter_run(
         main_artifacts_dir, current_run_folder_name_sanitized
     )
     current_run_log_file = os.path.join(current_run_artifacts_dir, "training_log.txt")
+    run_config_path = os.path.join(
+        current_run_artifacts_dir, "run_configuration.json"
+    )
 
     os.makedirs(current_run_artifacts_dir, exist_ok=True)
 
@@ -262,11 +265,25 @@ def process_single_hyperparameter_run(
         "CHECKPOINT_METRIC_DEFAULT": config_obj.CHECKPOINT_METRIC_DEFAULT,
     }
 
+    full_augmentation_params = current_augmentation_params.copy()
+    if hasattr(config_obj, "DATASET_TRAIN_AUGMENTATION_REVERB_PARAMS"):
+        full_augmentation_params["reverb_params"] = (
+            config_obj.DATASET_TRAIN_AUGMENTATION_REVERB_PARAMS
+        )
+    if hasattr(config_obj, "DATASET_TRAIN_AUGMENTATION_EQ_PARAMS"):
+        full_augmentation_params["eq_params"] = (
+            config_obj.DATASET_TRAIN_AUGMENTATION_EQ_PARAMS
+        )
+    if hasattr(config_obj, "DATASET_TRAIN_AUGMENTATION_CLIPPING_PARAMS"):
+        full_augmentation_params["clipping_params"] = (
+            config_obj.DATASET_TRAIN_AUGMENTATION_CLIPPING_PARAMS
+        )
+
     full_run_config_for_json = {
         "static_parameters": static_params_to_log,
         "default_training_parameters": default_train_params_to_log,
         "hyperparameters_tuned": hyperparams_combo,
-        "augmentations": current_augmentation_params,
+        "augmentations": full_augmentation_params,
     }
 
     config_for_training_loop = {
@@ -278,11 +295,7 @@ def process_single_hyperparameter_run(
         "NUM_EPOCHS": config_obj.NUM_EPOCHS_DEFAULT,
     }
 
-    with open(
-        os.path.join(current_run_artifacts_dir, "run_configuration.json"),
-        "w",
-        encoding="utf-8",
-    ) as f:
+    with open(run_config_path, "w", encoding="utf-8") as f:
         json.dump(full_run_config_for_json, f, indent=4)
 
     with open(current_run_log_file, "w", encoding="utf-8") as f:
@@ -308,7 +321,10 @@ def process_single_hyperparameter_run(
     best_model_path = os.path.join(current_run_artifacts_dir, "best_model.pth")
     if test_loader and os.path.exists(best_model_path):
         final_loaded_model = utils.load_best_model(
-            architecture.GuitarTabCRNN, model_init_params, best_model_path, device
+            model_class=architecture.GuitarTabCRNN,
+            model_path=best_model_path,
+            run_config_path=run_config_path,
+            device=device,
         )
         if final_loaded_model:
             print(f"\nEwaluacja na zbiorze testowym (próg 0.5)...")
@@ -341,7 +357,7 @@ def process_single_hyperparameter_run(
         "run_index": run_id,
         "run_folder_name": current_run_folder_name_sanitized,
         "params_combo": hyperparams_combo,
-        "augmentation_params": current_augmentation_params,
+        "augmentation_params": full_augmentation_params,
         f"best_{config_obj.CHECKPOINT_METRIC_DEFAULT}": best_val_metric_final,
         "test_metrics_at_0.5": final_test_metrics,
         "run_duration_minutes": (time.time() - run_start_time) / 60,

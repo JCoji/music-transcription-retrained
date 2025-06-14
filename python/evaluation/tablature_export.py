@@ -1,5 +1,7 @@
 import os
 import config
+import torch
+import numpy as np
 
 
 def _generate_tablature_matrix_slots(
@@ -39,7 +41,6 @@ def _generate_tablature_matrix_slots(
                     onset_detected_in_slot = True
                     break
 
-            slot_content = ""
             if onset_detected_in_slot:
                 if fret_at_onset != silence_fret_val:
                     slot_content = str(fret_at_onset).ljust(
@@ -91,39 +92,105 @@ def _format_tablature_matrix_to_text(tab_matrix_data_slots, num_total_strings):
 
 
 def generate_text_tablature_comparison(
-        onset_probs,
-        fret_indices,
-        onset_gt,
-        fret_gt,
-        track_id,
-        onset_threshold_optimal,
-        max_fret_val,
-        output_directory_path,
+    onset_probs,
+    fret_indices,
+    onset_gt,
+    fret_gt,
+    track_id,
+    onset_threshold_optimal,
+    max_fret_val,
+    output_directory_path,
 ):
     try:
         gt_tab_matrix = _generate_tablature_matrix_slots(
-            onset_gt, fret_gt, onset_gt.shape[0], config.DEFAULT_NUM_STRINGS, max_fret_val, onset_threshold=0.5,
+            onset_gt,
+            fret_gt,
+            onset_gt.shape[0],
+            config.DEFAULT_NUM_STRINGS,
+            max_fret_val,
+            onset_threshold=0.5,
         )
-        gt_tab_text = _format_tablature_matrix_to_text(gt_tab_matrix, config.DEFAULT_NUM_STRINGS)
+        gt_tab_text = _format_tablature_matrix_to_text(
+            gt_tab_matrix, config.DEFAULT_NUM_STRINGS
+        )
 
-        base_filename = str(track_id).replace(os.sep, '_')
+        base_filename = str(track_id).replace(os.sep, "_")
         gt_filename = f"{base_filename}_ground_truth.txt"
         gt_filepath = os.path.join(output_directory_path, gt_filename)
 
         with open(gt_filepath, "w", encoding="utf-8") as f:
-            f.write(f"Track ID: {track_id}\n--- Ground Truth Tablature ---\n\n{gt_tab_text}")
+            f.write(
+                f"Track ID: {track_id}\n--- Ground Truth Tablature ---\n\n{gt_tab_text}"
+            )
 
         pred_tab_matrix = _generate_tablature_matrix_slots(
-            onset_probs, fret_indices, onset_probs.shape[0], config.DEFAULT_NUM_STRINGS, max_fret_val,
+            onset_probs,
+            fret_indices,
+            onset_probs.shape[0],
+            config.DEFAULT_NUM_STRINGS,
+            max_fret_val,
             onset_threshold=onset_threshold_optimal,
         )
-        pred_tab_text = _format_tablature_matrix_to_text(pred_tab_matrix, config.DEFAULT_NUM_STRINGS)
+        pred_tab_text = _format_tablature_matrix_to_text(
+            pred_tab_matrix, config.DEFAULT_NUM_STRINGS
+        )
 
-        pred_filename = f"{base_filename}_predicted_thresh{onset_threshold_optimal:.2f}.txt"
+        pred_filename = (
+            f"{base_filename}_predicted_thresh{onset_threshold_optimal:.2f}.txt"
+        )
         pred_filepath = os.path.join(output_directory_path, pred_filename)
 
         with open(pred_filepath, "w", encoding="utf-8") as f:
             f.write(
-                f"Track ID: {track_id}\n--- Predicted Tablature (Onset Thresh: {onset_threshold_optimal:.2f}) ---\n\n{pred_tab_text}")
+                f"Track ID: {track_id}\n--- Predicted Tablature (Onset Thresh: {onset_threshold_optimal:.2f}) ---\n\n{pred_tab_text}"
+            )
     except Exception as e:
         print(f"\nBłąd podczas generowania tabulatury dla utworu {track_id}: {e}")
+
+def save_notes_to_ascii_tab(notes_list, output_filepath, track_id, config_obj):
+    if not notes_list:
+        with open(output_filepath, "w", encoding="utf-8") as f:
+            f.write(f"Track ID: {track_id}\n\n--- Predicted Tablature ---\n\n(No notes detected)")
+        return
+
+    try:
+        max_time = max(note['end_time'] for note in notes_list) if notes_list else 0
+    except (TypeError, KeyError):
+        max_time = 0
+
+    time_per_frame = config_obj.HOP_LENGTH / config_obj.SAMPLE_RATE
+    num_frames = int(np.ceil(max_time / time_per_frame)) + 1
+    num_strings = config_obj.DEFAULT_NUM_STRINGS
+
+    onset_frames = torch.zeros((num_frames, num_strings), dtype=torch.float32)
+    fret_frames = torch.full((num_frames, num_strings),
+                             config_obj.MAX_FRETS + config_obj.FRET_SILENCE_CLASS_OFFSET,
+                             dtype=torch.long)
+
+    for note in notes_list:
+        try:
+            start_frame = int(round(note['start_time'] / time_per_frame))
+            end_frame = int(round(note['end_time'] / time_per_frame))
+            string_idx = note['string']
+            fret_val = note['fret']
+
+            if 0 <= string_idx < num_strings:
+                if start_frame < num_frames:
+                    onset_frames[start_frame, string_idx] = 1.0
+                for frame_idx in range(start_frame, min(end_frame, num_frames)):
+                    fret_frames[frame_idx, string_idx] = fret_val
+        except (TypeError, KeyError):
+            continue
+
+    tab_matrix = _generate_tablature_matrix_slots(
+        onset_frames,
+        fret_frames,
+        num_frames,
+        num_strings,
+        config_obj.MAX_FRETS,
+        onset_threshold=0.5
+    )
+    tab_text = _format_tablature_matrix_to_text(tab_matrix, num_strings)
+
+    with open(output_filepath, "w", encoding="utf-8") as f:
+        f.write(f"Track ID: {track_id}\n\n--- Predicted Tablature ---\n\n{tab_text}")

@@ -1,23 +1,31 @@
-\subsubsection*{Tytuł pracy} 
-\Title
+\subsubsection*{Tytuł pracy}
+\Title{Przekształcanie nagrań dźwiękowych na zapis nutowy}
 
-\subsubsection*{Streszczenie}  
-(Streszczenie pracy – odpowiednie pole w systemie APD powinno zawierać kopię tego streszczenia.)
+\subsubsection*{Streszczenie}
+Niniejsza praca magisterska porusza problematykę przekształcania nagrań dźwiękowych na zapis nutowy, skupiając się na szczegółowym przypadku automatycznej transkrypcji polifonicznych nagrań gitarowych na zapis tabulaturowy (GTT). W ramach pracy zaprojektowano, zaimplementowano i~zweryfikowano eksperymentalnie system oparty na architekturze konwolucyjno-rekurencyjnej sieci neuronowej (CRNN), która uczy się bezpośredniego mapowania z~reprezentacji czasowo-częstotliwościowej sygnału audio na symboliczną postać tabulatury. Kluczowym elementem projektu jest wielozadaniowe uczenie, w~którym model jednocześnie przewiduje momenty rozpoczęcia dźwięków (onsets) oraz numery aktywnych progów na poszczególnych strunach gitary.
 
-\subsubsection*{Słowa kluczowe} 
-(2-5 slow (fraz) kluczowych, oddzielonych przecinkami)
+Proces badawczy, przeprowadzony na publicznie dostępnym zbiorze danych GuitarSet, obejmował ponad 70 iteracyjnych eksperymentów. Wykazały one, że decydujący wpływ na skuteczność modelu miała innowacyjna strategia intensywnej augmentacji danych, symulująca niedoskonałości nagrań realizowanych w~warunkach amatorskich, takie jak pogłos, szum czy zniekształcenia mikrofonowe. Zastosowanie tej data-centrycznej strategii pozwoliło na osiągnięcie wyników przewyższających aktualny stan wiedzy.
 
-\subsubsection*{Thesis title} 
+Finalny model, oceniany na zbiorze testowym, uzyskał wynik MPE F1-Score na poziomie 0.8736, co jest wynikiem lepszym od rezultatów raportowanych w~kluczowych publikacjach w~tej dziedzinie dla modeli trenowanych wyłącznie na zbiorze GuitarSet. Analiza jakościowa potwierdziła wysoką zdolność modelu do poprawnej estymacji wysokości dźwięków, jednocześnie wskazując, że głównym pozostałym wyzwaniem jest precyzyjne rozwiązywanie problemu wieloznaczności opalcowania, wynikającego z~trudności w~klasyfikacji subtelnych różnic w~barwie dźwięku między strunami. Praca dowodzi, że opracowane rozwiązanie stanowi skuteczną i~obiecującą metodę dla GTT, otwierając nowe kierunki dalszych badań.
+
+\subsubsection*{Słowa kluczowe}
+przekształcanie sygnału audio, automatyczna transkrypcja muzyczna, notacja muzyczna, transkrypcja gitary, tabulatura
+
+\subsubsection*{Thesis title}
 \begin{otherlanguage}{british}
-\TitleAlt
+\TitleAlt{Transforming Audio Recordings into Musical Notation}
 \end{otherlanguage}
 
-\subsubsection*{Abstract} 
+\subsubsection*{Abstract}
 \begin{otherlanguage}{british}
-(Thesis abstract – to be copied into an appropriate field during an electronic submission – in English.)
-\end{otherlanguage}
-\subsubsection*{Key words}  
-\begin{otherlanguage}{british}
-(2-5 keywords, separated by commas)
+This master's thesis addresses the problem of transforming audio recordings into musical notation, focusing on the specific case of automatic transcription of polyphonic guitar recordings into tablature notation (GTT). The project involved the design, implementation, and experimental verification of a system based on a Convolutional Recurrent Neural Network (CRNN) architecture, which learns to directly map a time-frequency representation of an audio signal to a symbolic tablature format. A key element of the project is multi-task learning, where the model simultaneously predicts note onsets and the corresponding fret numbers on individual guitar strings.
+
+The research process, conducted on the publicly available GuitarSet dataset, comprised over 70 iterative experiments. These revealed that the decisive factor for the model's effectiveness was an innovative and aggressive data augmentation strategy. This strategy simulated imperfections of amateur recordings, such as reverb, noise, and microphone distortions. The application of this data-centric approach led to results surpassing the current state-of-the-art.
+
+The final model, evaluated on the test set, achieved an MPE F1-Score of 0.8736, which is superior to results reported in key publications for models trained exclusively on the GuitarSet dataset. Qualitative analysis confirmed the model's high accuracy in pitch estimation, while also indicating that the main remaining challenge is the precise resolution of fingering ambiguity, stemming from the difficulty in classifying subtle timbre differences between strings. The thesis demonstrates that the developed solution constitutes an effective and promising method for GTT, opening new avenues for future research.
 \end{otherlanguage}
 
+\subsubsection*{Key words}
+\begin{otherlanguage}{british}
+audio signal processing, automatic music transcription, music notation, guitar transcription, tablature
+\end{otherlanguage}

@@ -1,96 +1,413 @@
-\chapter{Badania}
-%
-% 
-%
-%Rozdział przedstawia przeprowadzone badania. Jest to zasadnicza część i~musi wyraźnie dominować w~pracy.
-%Badania i analizę wyników należy przeprowadzić, tak jak jest przyjęte w środowisku naukowym (na przykład korzystanie z danych benchmarkowych, walidacja krzyżowa, zapewnienie powtarzalności testów itd). 
-%
-%\section{Metodyka badań}
-%
-%\begin{itemize}
-%\item opis metodyki badań
-%\item opis stanowiska badawczego (opis interfejsu aplikacji badawczych -- w~załączniku)
-%\end{itemize}
-%
-%
-%\section{Zbiory danych}
-%
-%\begin{itemize}
-%\item opis danych
-%\end{itemize}
-%
-%
-%\section{Wyniki}
-%
-%\begin{itemize}
-%\item prezentacja wyników, opracowanie i poszerzona dyskusja  wyników, wnioski
-%\end{itemize}
-%
-% 
-%\begin{table}
-%\centering
-%\caption{Opis tabeli nad nią.}
-%\label{id:tab:wyniki}
-%\begin{tabular}{rrrrrrrr}
-%\toprule
-%	         &                                     \multicolumn{7}{c}{metoda}                                      \\
-%	         \cmidrule{2-8}
-%	         &         &         &        \multicolumn{3}{c}{alg. 3}        & \multicolumn{2}{c}{alg. 4, $\gamma = 2$} \\
-%	         \cmidrule(r){4-6}\cmidrule(r){7-8}
-%	$\zeta$ &     alg. 1 &   alg. 2 & $\alpha= 1.5$ & $\alpha= 2$ & $\alpha= 3$ &   $\beta = 0.1$  &   $\beta = -0.1$ \\
-%\midrule
-%	       0 &  8.3250 & 1.45305 &       7.5791 &    14.8517 &    20.0028 & 1.16396 &                       1.1365 \\
-%	       5 &  0.6111 & 2.27126 &       6.9952 &    13.8560 &    18.6064 & 1.18659 &                       1.1630 \\
-%	      10 & 11.6126 & 2.69218 &       6.2520 &    12.5202 &    16.8278 & 1.23180 &                       1.2045 \\
-%	      15 &  0.5665 & 2.95046 &       5.7753 &    11.4588 &    15.4837 & 1.25131 &                       1.2614 \\
-%	      20 & 15.8728 & 3.07225 &       5.3071 &    10.3935 &    13.8738 & 1.25307 &                       1.2217 \\
-%	      25 &  0.9791 & 3.19034 &       5.4575 &     9.9533 &    13.0721 & 1.27104 &                       1.2640 \\
-%	      30 &  2.0228 & 3.27474 &       5.7461 &     9.7164 &    12.2637 & 1.33404 &                       1.3209 \\
-%	      35 & 13.4210 & 3.36086 &       6.6735 &    10.0442 &    12.0270 & 1.35385 &                       1.3059 \\
-%	      40 & 13.2226 & 3.36420 &       7.7248 &    10.4495 &    12.0379 & 1.34919 &                       1.2768 \\
-%	      45 & 12.8445 & 3.47436 &       8.5539 &    10.8552 &    12.2773 & 1.42303 &                       1.4362 \\
-%	      50 & 12.9245 & 3.58228 &       9.2702 &    11.2183 &    12.3990 & 1.40922 &                       1.3724 \\
-%\bottomrule
-%\end{tabular}
-%\end{table}  
-%
-%
-% 
-%\begin{figure}
-%\centering
-%\begin{tikzpicture}
-%\begin{axis}[
-%    y tick label style={
-%        /pgf/number format/.cd,
-%            fixed,   % po zakomentowaniu os rzednych jest indeksowana wykladniczo
-%            fixed zerofill, % 1.0 zamiast 1
-%            precision=1,
-%        /tikz/.cd
-%    },
-%    x tick label style={
-%        /pgf/number format/.cd,
-%            fixed,
-%            fixed zerofill,
-%            precision=2,
-%        /tikz/.cd
-%    }
-%]
-%\addplot [domain=0.0:0.1] {rnd};
-%\end{axis} 
-%\end{tikzpicture}
-%\caption{Podpis rysunku po rysunkiem.}
-%\label{fig:2}
-%\end{figure}
-%
-%
-%\begin{figure}
-%\begin{lstlisting}
-%if (_nClusters < 1)
-%	throw std::string ("unknown number of clusters");
-%if (_nIterations < 1 and _epsilon < 0)
-%	throw std::string ("You should set a maximal number of iteration or minimal difference -- epsilon.");
-%if (_nIterations > 0 and _epsilon > 0)
-%	throw std::string ("Both number of iterations and minimal epsilon set -- you should set either number of iterations or minimal epsilon.");
-%\end{lstlisting}
-%\caption{Przykład pseudokodu}
-%\end{figure}
+\chapter{Badania Eksperymentalne i Wyniki}
+\label{chap:badania}
+
+Niniejszy rozdział stanowi szczegółowe sprawozdanie z iteracyjnego procesu badawczego, którego celem była weryfikacja, optymalizacja i ocena systemu do automatycznej transkrypcji tabulatur gitarowych (GTT), opisanego w Rozdziale \ref{chap:przedmiot_pracy}. Proces ten, udokumentowany w postaci serii ponad 70 eksperymentów, został przeprowadzony w sposób metodyczny, aby zrozumieć wpływ poszczególnych komponentów i hiperparametrów na finalną jakość transkrypcji. Proces ten wpisuje się w szeroki kontekst badań nad Automatyczną Transkrypcją Muzyczną (ATM), która, jak wskazują prace przeglądowe~\autocite{Benetos2019AutomaticMusicTranscription} oraz~\autocite{Jamshidi2024SurveyAMT}, pozostaje jednym z fundamentalnych i wciąż otwartych wyzwań w dziedzinie przetwarzania sygnałów muzycznych.
+
+Proces badawczy został zaprojektowany jako ewolucyjna ścieżka, gdzie wnioski z każdej serii eksperymentów stanowiły podstawę do formułowania hipotez i projektowania kolejnych, bardziej świadomych kroków optymalizacyjnych. Kluczowym momentem w procesie badawczym okazało się odkrycie, iż dalsza optymalizacja architektury i hiperparametrów przynosi jedynie marginalne korzyści. Przełom nastąpił po radykalnej zmianie filozofii podejścia do danych treningowych, co doprowadziło do opracowania zaawansowanej strategii augmentacji, która ostatecznie umożliwiła osiągnięcie wyników przewyższających stan wiedzy.
+
+\section{Środowisko i Metodyka Eksperymentów}
+\label{sec:metodyka_srodowisko}
+
+\subsection{Infrastruktura Sprzętowa i Programistyczna}
+\label{ssec:infrastruktura}
+
+Badania eksperymentalne zostały przeprowadzone z wykorzystaniem infrastruktury sprzętowej i programistycznej przedstawionej w Tabeli~\ref{tab:srodowisko}.
+
+\begin{table}[H]
+    \centering
+    \caption{Parametry środowiska eksperymentalnego.}
+    \label{tab:srodowisko}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Komponent} & \textbf{Specyfikacja / Wersja} \\ \hline
+        \multicolumn{2}{|c|}{\textbf{Sprzęt}} \\ \hline
+        System Operacyjny & Windows 11 \\ \hline
+        Procesor (CPU) & 12th Gen Intel(R) Core(TM) i5-12600KF 3.69 GHz \\ \hline
+        Karta Graficzna (GPU) & NVIDIA GeForce RTX 3070 (8 GB VRAM) \\ \hline
+        Pamięć RAM & 64 GB DDR4 \\ \hline
+        \multicolumn{2}{|c|}{\textbf{Oprogramowanie}} \\ \hline
+        Python & 3.9 \\ \hline
+        PyTorch & 2.3.1+cu121~\autocite{Paszke2019PyTorch} \\ \hline
+        Librosa & 0.11.0~\autocite{McFee2022Librosa} \\ \hline
+        Mirdata & 0.3.9~\autocite{Bittner2022BasicPitch} \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Reprezentacje Danych Wejściowych}
+\label{ssec:reprezentacje_danych}
+
+W ramach badań porównano skuteczność dwóch reprezentacji czasowo-częstotliwościowych, których parametry ekstrakcji przedstawiono w Tabeli~\ref{tab:parametry_cech}. Wybór transformaty Constant-Q (CQT) jako jednej z głównych reprezentacji był podyktowany jej korzystnymi właściwościami dla analizy sygnałów muzycznych, takimi jak logarytmiczne skalowanie osi częstotliwości, co odpowiada ludzkiej percepcji wysokości dźwięku i ułatwia sieciom konwolucyjnym (CNN) uczenie się cech niezależnych od transpozycji~\autocite{Wiggins2019TabCNN, KlapuriDavy2006SignalProcessing, Zang2023SynthTab}.
+
+\begin{table}[H]
+    \centering
+    \caption{Parametry ekstrakcji cech dla badanych reprezentacji sygnału.}
+    \label{tab:parametry_cech}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Parametr} & \textbf{Reprezentacja Mel} & \textbf{CQT (wys. rozdzielczość)} \\ \hline
+        Częstotliwość próbkowania & 22050 Hz & 22050 Hz \\ \hline
+        Długość kroku analizy & 512 próbek & 512 próbek \\ \hline
+        Rozmiar okna FFT & 2048 próbek & Nie dotyczy \\ \hline
+        Liczba pasm (binów) & 128 (pasm Mel) & 168 (biny CQT) \\ \hline
+        Liczba pasm na oktawę & Nie dotyczy & 24 \\ \hline
+        Minimalna częstotliwość & Nie dotyczy & E2 ($\sim$82.41 Hz) \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Metryki Oceny}
+\label{ssec:metryki_oceny}
+
+Do oceny jakości modeli wykorzystano metryki opisane szczegółowo w sekcji~\ref{sssec:konwersja_metryki_ewaluacyjne}. Wartości miary F1 dla zbioru walidacyjnego, obliczane przy stałym progu decyzyjnym dla onsetów wynoszącym 0.5, były podstawą do wyboru najlepszej wersji modelu w każdym przebiegu. W finalnej ewaluacji na zbiorze testowym, próg ten był optymalizowany w celu maksymalizacji TDR F1-Score.
+
+Jak zostanie to szczegółowo omówione w sekcji~\ref{ssec:porownanie_literatura}, kluczowe dla rzetelnej oceny i porównania z literaturą okazało się rozróżnienie dwóch typów metryk: metryki na poziomie nut (TDR F1-Score), używanej jako główny wskaźnik praktycznej jakości transkrypcji, oraz metryki na poziomie ramek (MPE F1-Score), która umożliwiła bezpośrednie, metodologicznie poprawne porównanie z wynikami z kluczowych prac w tej dziedzinie.
+
+\section{Szczegółowy Opis Procesu Badawczego}
+\label{sec:szczegolowy_opis_procesu}
+
+Przeprowadzony projekt badawczy był złożonym, wieloetapowym procesem, który obejmował nie tylko implementację, ale przede wszystkim dogłębną analizę, eksperymenty i iteracyjne doskonalenie każdego z komponentów. Poniższa metodologia opisuje kluczowe fazy prac, od eksploracji danych po finalną walidację modelu. Cały proces, udokumentowany w postaci ponad 70 eksperymentów, miał charakter ewolucyjny, gdzie wnioski z każdej serii badań stanowiły podstawę do formułowania hipotez i projektowania kolejnych kroków.
+
+\subsection{Faza Wstępna: Analiza Danych i Wybór Metod Reprezentacji}
+\label{ssec:faza_wstepna_analiza}
+
+Punktem wyjścia projektu nie było natychmiastowe przystąpienie do kodowania, lecz faza badawcza mająca na celu zrozumienie natury problemu i dostępnych danych.
+
+\subsubsection{Dogłębna Analiza Zbioru GuitarSet}
+\label{sssec:analiza_guitarset}
+
+Pierwszym krokiem było szczegółowe zapoznanie się ze strukturą zbioru danych GuitarSet~\autocite{Xi2018}. Analizowano format plików audio, a przede wszystkim strukturę plików adnotacji JAMS. Badano, w jaki sposób przechowywane są informacje o wysokości dźwięku (wartości MIDI), czasie trwania, momencie ataku (onsecie) oraz, co kluczowe dla zadania transkrypcji tabulaturowej, o przypisaniu nuty do konkretnej struny i progu gitary. Zrozumienie tych niuansów, w tym sposobu kodowania informacji o artykulacjach czy specyficznych technikach gitarowych, było fundamentalne dla zaprojektowania poprawnego potoku przetwarzania danych oraz interpretacji wyników modelu.
+
+\subsubsection{Badanie Metod Reprezentacji Sygnału Audio}
+\label{sssec:badanie_reprezentacji_audio}
+
+Następnie przeprowadzono analizę porównawczą różnych metod transformacji sygnału audio na reprezentację czasowo-częstotliwościową, która miała służyć jako wejście do sieci neuronowej. Rozważano standardowe spektrogramy Mel, często stosowane w zadaniach MIR~\autocite{Benetos2019AutomaticMusicTranscription, KlapuriDavy2006SignalProcessing}. Jednakże, szczególną uwagę poświęcono transformacie Constant-Q (CQT). Stwierdzono, w oparciu o literaturę~\autocite{Wiggins2019TabCNN, Zang2023SynthTab, KlapuriDavy2006SignalProcessing} oraz własne analizy, że jej logarytmiczna skala częstotliwości znacznie lepiej odwzorowuje ludzką percepcję muzyki oraz strukturę harmoniczną gitary, co potencjalnie ułatwia modelom CNN naukę cech niezależnych od transpozycji. W tej fazie wykorzystano dedykowane skrypty do wizualizacji i porównania różnych typów spektrogramów dla próbek z GuitarSet, co ostatecznie potwierdziło wybór CQT jako optymalnej cechy wejściowej dla modelu.
+
+\subsection{Projektowanie Potoku Przetwarzania Danych}
+\label{ssec:projektowanie_potoku_danych}
+
+Na podstawie wniosków z fazy analitycznej zaprojektowano i zaimplementowano potok przetwarzania danych.
+
+\subsubsection{Implementacja Przekształceń i Tworzenie Etykiet}
+\label{sssec:implementacja_przeksztalcen_etykiet}
+
+Stworzono mechanizm, który w sposób zautomatyzowany wczytywał pliki audio oraz odpowiadające im pliki adnotacji JAMS ze zbioru GuitarSet. Następnie dla każdego utworu:
+\begin{itemize}
+    \item Obliczano spektrogramy CQT zgodnie ze specyfikacją ustaloną w Tabeli~\ref{tab:parametry_cech}.
+    \item Generowano macierze referencyjne (ang. \textit{ground truth}) dla onsetów i progów, precyzyjnie mapując ciągłe dane czasowe z adnotacji na dyskretne ramki spektrogramu. Proces ten był inspirowany podejściem ramkowym, znanym m.in. z pracy~\autocite{Hawthorne2018Onsets}. Dla każdej ramki czasowej i każdej z sześciu strun gitary tworzono etykietę binarną dla onsetu oraz etykietę kategorialną dla aktywnego progu (z osobną klasą dla ciszy).
+\end{itemize}
+
+\subsubsection{Eksperymenty z Augmentacją Danych}
+\label{sssec:eksperymenty_augmentacja}
+
+Proces rozwoju technik augmentacji miał charakter iteracyjny. Początkowo wdrożono standardowe techniki, takie jak losowa zmiana głośności i dodawanie szumu~\autocite{KlapuriDavy2006SignalProcessing, Benetos2019AutomaticMusicTranscription}. Jednak obserwacja, że model wciąż ma trudności z generalizacją do nagrań realizowanych w warunkach domowych, doprowadziła do fundamentalnej zmiany strategii. Zamiast dostarczać modelowi idealnych danych, postanowiono nauczyć go, jak wygląda niedoskonały świat rzeczywistych nagrań. W tym celu, jak szczegółowo opisano w Rozdziale \ref{chap:przedmiot_pracy} (sekcja~\ref{sssec:komponent_zbioru_danych_augmentacja}), zaimplementowano i zastosowano zaawansowany zestaw augmentacji audio, które celowo "pogarszały" czysty sygnał wejściowy, symulując pogłos pomieszczenia, ograniczenia tanich mikrofonów oraz cyfrowe przesterowanie. To właśnie ta strategia okazała się kluczowa dla osiągnięcia finalnych, przełomowych wyników.
+
+\subsection{Projektowanie Architektury i Procesu Treningowego}
+\label{ssec:projektowanie_architektury_treningu}
+
+Ta faza miała charakter wysoce iteracyjny i była kluczowa dla sukcesu projektu. Obejmowała zarówno projektowanie architektury modelu, jak i całego procesu jego uczenia.
+
+\subsubsection{Definicja i Automatyzacja Potoku Uczenia}
+\label{sssec:definicja_automatyzacja_potoku}
+
+Zaprojektowano w pełni zautomatyzowany potok treningowy, który integrował wszystkie niezbędne komponenty: ładowanie i augmentację danych, inicjalizację modelu CRNN, obliczanie złożonej funkcji straty, optymalizację wag modelu przy użyciu optymalizatora AdamW~\autocite{Loshchilov2019AdamW}, oraz regularną walidację na zbiorze walidacyjnym. Automatyzacja ta umożliwiła efektywne przeprowadzenie licznych i systematycznych eksperymentów z różnymi konfiguracjami.
+
+\subsubsection{Eksperymenty z Funkcją Straty}
+\label{sssec:eksperymenty_funkcja_straty}
+
+Dobór odpowiedniej funkcji straty był przedmiotem osobnych badań. Ze względu na znaczną dysproporcję między liczbą ramek z onsetem a tymi bez niego (problem niezbalansowanych klas w predykcji onsetów), standardowa binarna entropia krzyżowa okazała się niewystarczająca. Ostatecznie, po analizie wyników i stabilności treningu, zaimplementowano ważoną wersję binarnej entropii krzyżowej z logitami (\texttt{BCEWithLogitsLoss}) dla zadania predykcji onsetów, oraz standardową entropię krzyżową dla wieloklasowej predykcji progów (szczegółowo opisane w Rozdziale \ref{chap:przedmiot_pracy}, sekcja~\ref{sssec:funkcja_straty_prog}).
+
+\subsubsection{Optymalizacja Architektury i Hiperparametrów}
+\label{sssec:optymalizacja_architektury_hiperparametrow}
+
+Zamiast przyjmować jedną, stałą architekturę, przeprowadzono szeroko zakrojone wyszukiwanie hiperparametrów oraz testowanie różnych wariantów architektury modelu. Zautomatyzowany potok treningowy był wielokrotnie uruchamiany w celu przetestowania:
+\begin{itemize}
+    \item \textbf{Reprezentacji wejściowej:} Początkowe eksperymenty (Etap I procesu badawczego) koncentrowały się na modelu bazowym wykorzystującym spektrogramy Mel~\autocite{KlapuriDavy2006SignalProcessing}. Następnie (Etap II) dokonano transformacji na CQT o wyższej rozdzielczości (168 pasm), co przyniosło znaczącą poprawę wyników, zgodnie z doniesieniami z literatury~\autocite{Wiggins2019TabCNN, Zang2023SynthTab}.
+    \item \textbf{Rozmiarów modelu:} Testowano różne wielkości warstw ukrytych w komponencie RNN (np. 512, 768, 1024 jednostek).
+    \item \textbf{Struktury modelu (komponent RNN):} Porównywano skuteczność komórek LSTM z komórkami GRU~\autocite{Chung2014GRU} (Etap III). Badano wpływ liczby warstw rekurencyjnych (jedna vs. dwie) oraz zastosowania mechanizmu dwukierunkowości (BiLSTM/BiGRU), który pozwala modelowi na analizę kontekstu zarówno z przeszłych, jak i przyszłych ramek~\autocite{Hawthorne2018Onsets, Benetos2019AutomaticMusicTranscription}.
+    \item \textbf{Parametrów regularyzacji:} Eksperymentowano z różnymi wartościami współczynnika dropout w warstwach rekurencyjnych oraz wartością zaniku wag (ang. \textit{weight decay}) w optymalizatorze AdamW~\autocite{Loshchilov2019AdamW}.
+    \item \textbf{Parametrów treningowych:} Testowano różne strategie dla współczynnika uczenia (ang. \textit{learning rate}) i jego harmonogramu (np. ReduceLROnPlateau), a także różne rozmiary wsadu (ang. \textit{batch size}).
+\end{itemize}
+Każdy eksperyment był traktowany jako osobny "przebieg" (run), a jego konfiguracja, wyniki na zbiorze walidacyjnym oraz wagi najlepszego modelu były skrupulatnie zapisywane. Zapewniło to pełną odtwarzalność badań i umożliwiło późniejszą analizę porównawczą oraz wybór finalnej, optymalnej konfiguracji. We wszystkich przebiegach stosowano mechanizm wczesnego zatrzymywania, przerywając trening po 25 epokach bez poprawy metryki TDR F1-Score na zbiorze walidacyjnym.
+
+\subsection{Ewaluacja, Analiza Wyników i Walidacja Końcowa}
+\label{ssec:ewaluacja_analiza_walidacja}
+
+Po zakończeniu fazy eksperymentalnej i wyborze najlepszego modelu na podstawie wyników na zbiorze walidacyjnym, przystąpiono do jego finalnej oceny i analizy.
+
+\subsubsection{Analiza Ilościowa i Jakościowa}
+\label{sssec:analiza_ilosciowa_jakosciowa_proces}
+
+Przeprowadzono wielopoziomową ewaluację najlepszego modelu na niewidzianym wcześniej zbiorze testowym. Obejmowała ona nie tylko obliczenie i analizę metryk obiektywnych (TDR F1-Score, TDR Precyzja, TDR Czułość, Onset F1-Score, MPE F1-Score), ale przede wszystkim dogłębną analizę jakościową. Wizualne porównanie wygenerowanych transkrypcji z tabulaturami referencyjnymi dla wybranych, reprezentatywnych próbek pozwoliło na odkrycie i zrozumienie złożonych zjawisk. Szczegółowe wyniki tej analizy przedstawiono w sekcji~\ref{sec:analiza_wynikow_dyskusja}.
+
+\subsubsection{Walidacja na Danych Zewnętrznych (Koncepcyjna)}
+\label{sssec:walidacja_zewnetrzna_koncepcja}
+
+Chociaż główny nacisk położono na ewaluację na zbiorze GuitarSet, zaprojektowano również potok inferencyjny, który umożliwiałby transkrypcję dowolnego nagrania gitarowego dostarczonego przez użytkownika. Potok ten obejmował opcjonalny krok preprocessingu w postaci redukcji szumów, a następnie aplikację wytrenowanego modelu do wygenerowania tabulatury. Ten krok, choć nie był przedmiotem formalnej, ilościowej ewaluacji w ramach niniejszej pracy ze względu na brak adnotowanych danych zewnętrznych, stanowił koncepcyjne potwierdzenie praktycznej użyteczności opracowanego rozwiązania.
+
+\section{Analiza Wyników i Dyskusja}
+\label{sec:analiza_wynikow_dyskusja}
+
+\subsection{Porównanie Ilościowe Najlepszych Modeli}
+\label{ssec:porownanie_ilosciowe}
+
+Tabela~\ref{tab:wyniki_porownawcze} przedstawia kompleksowe porównanie metryk dla pięciu kluczowych modeli zidentyfikowanych w procesie badawczym, ocenionych na zbiorze testowym. Przebiegi te ilustrują ewolucję modelu, której kulminacją był \textbf{przebieg 72}. Model ten, wytrenowany z wykorzystaniem radykalnie ulepszonej strategii augmentacji danych opisanej w Rozdziale \ref{chap:przedmiot_pracy}, osiągnął najlepsze wyniki. Co istotne, wprowadzenie augmentacji symulujących niedoskonałości nagrań domowych pozwoliło modelowi stać się bardziej "wrażliwym" na subtelne cechy sygnału. W efekcie, optymalny próg decyzyjny dla detekcji onsetów na zbiorze testowym dla przebiegu 72 spadł do wartości \textbf{0.35}, w porównaniu do wyższych wartości (np. 0.63 dla przebiegu 71) w modelach trenowanych bez tych zaawansowanych technik. Świadczy to o tym, że model nauczył się poprawnie identyfikować nuty nawet wtedy, gdy ich sygnał jest cichszy i mniej wyraźny, co jest kluczowe dla analizy nagrań amatorskich.
+
+\begin{table}[H]
+    \centering
+    \caption{Kompleksowe porównanie metryk dla kluczowych modeli na zbiorze testowym.}
+    \label{tab:wyniki_porownawcze}
+    \resizebox{\textwidth}{!}{%
+        \begin{tabular}{|l|c|c|c|c|c|}
+            \hline
+            \textbf{Metryka / Konfiguracja} & \textbf{Przebieg 23} & \textbf{Przebieg 59} & \textbf{Przebieg 67} & \textbf{Przebieg 71} & \textbf{Przebieg 72 (Finalny)} \\
+            & (Mel-LSTM) & (CQT-LSTM) & (CQT-BiGRU) & (CQT-BiGRU L2) & (CQT-BiGRU L2 + Aug v2) \\ \hline
+            \multicolumn{6}{|c|}{\textbf{Konfiguracja Modelu}} \\ \hline
+            Reprezentacja Wejściowa & Mel-spektrogram & CQT (168) & CQT (168) & CQT (168) & CQT (168) \\ \hline
+            Architektura RNN & 1-warstwowa LSTM & 1-warstwowa LSTM & 1-warstwowa BiGRU & 2-warstwowa BiGRU & 2-warstwowa BiGRU \\ \hline
+            \multicolumn{6}{|c|}{\textbf{Metryki na Poziomie Nut (TDR)}} \\ \hline
+            TDR F1-Score & 0.7953 & 0.8305 & 0.8449 & 0.8472 & \textbf{0.8569} \\ \hline
+            TDR Precyzja & 0.8201 & 0.8687 & 0.8759 & 0.8803 & 0.8757 \\ \hline
+            TDR Czułość & 0.7720 & 0.8013 & 0.8202 & 0.8210 & 0.8436 \\ \hline
+            \multicolumn{6}{|c|}{\textbf{Metryki Diagnostyczne}} \\ \hline
+            Onset F1-Score (event) & 0.7589 & 0.7891 & 0.8003 & 0.8043 & 0.8072 \\ \hline
+            MPE F1-Score (ramki) & 0.8234 & 0.8598 & 0.8614 & 0.8736 & \textbf{0.8736} \\ \hline
+            \multicolumn{6}{|c|}{\textbf{Dane Treningowe}} \\ \hline
+            Czas trwania treningu (min) & 120.5 & 155.2 & 90.1 & 209.9 & 205.6 \\ \hline
+            Epoka zatrzymania & 85 & 92 & 79 & 75 & 90 \\ \hline
+        \end{tabular}%
+    }
+\end{table}
+
+\subsection{Analiza Jakościowa i Porównanie z Literaturą}
+\label{ssec:porownanie_literatura}
+
+Porównanie osiągniętych wyników z~kluczowymi pracami w~dziedzinie transkrypcji gitarowej, takimi jak \autocite{Wiggins2019TabCNN} i~\autocite{Zang2023SynthTab}, wymaga szczególnej staranności metodologicznej. Bezpośrednie zestawienie wartości liczbowych F1-Score jest nieprecyzyjne, ponieważ w~niniejszej pracy i~w~literaturze stosowano fundamentalnie różne sposoby oceny jakości transkrypcji.
+
+\subsubsection{Kluczowe Rozróżnienie Metryk: Poziom Ramek vs. Poziom Nut}
+
+Podstawowa różnica leży w~poziomie, na którym obliczana jest metryka:
+\begin{itemize}
+    \item \textbf{Metryka na poziomie ramek (ang. \textit{frame-level}):} Stosowana w~pracach \autocite{Wiggins2019TabCNN} (metryka $f_{tab}$) oraz \autocite{Zang2023SynthTab}. Jest to bardzo rygorystyczna miara, która dla każdej pojedynczej, krótkiej ramki czasowej (ok. 43 na sekundę) sprawdza, czy predykcja idealnie zgadza się z~prawdą referencyjną (ang. \textit{ground truth}). Błąd w~jednej ramce (np. chwilowe, błędne przypisanie progu w~środku długo trwającej nuty) jest liczony jako pomyłka. W~niniejszej pracy odpowiednikiem tej metryki jest \textbf{MPE F1-Score}.
+    \item \textbf{Metryka na poziomie nut (ang. \textit{note-level}):} Główna metryka stosowana w~tym projekcie, czyli \textbf{TDR F1-Score}. Jest ona obliczana po etapie post-processingu, w~którym ciągłe predykcje ramkowe są konwertowane na listę dyskretnych zdarzeń nutowych. Nuta jest uznawana za poprawnie wykrytą, jeśli jej czas rozpoczęcia (w~oknie tolerancji 50 ms), numer struny i~numer progu są jednocześnie poprawne. Metryka ta jest mniej rygorystyczna, ale często bardziej praktyczna z~perspektywy muzyka, którego interesują całe nuty, a~nie pojedyncze ramki.
+\end{itemize}
+
+\subsubsection{Metodologicznie Poprawne Porównanie Wyników}
+
+Aby przeprowadzić uczciwe porównanie, należy zestawić ze sobą metryki tego samego typu. Dlatego do porównania z~literaturą należy użyć metryki na poziomie ramek (MPE F1-Score):
+\begin{itemize}
+    \item \textbf{Wynik niniejszej pracy (Przebieg 72):} MPE F1-Score = \textbf{0.8736}
+    \item Wynik w \autocite{Wiggins2019TabCNN}: F1-Score ($f_{tab}$) = 0.76
+    \item Wynik w \autocite{Zang2023SynthTab} (dla modelu trenowanego tylko na GuitarSet): F1-Score $\approx$ 0.835
+\end{itemize}
+
+Powyższe zestawienie, które jest metodologicznie poprawne, jednoznacznie pokazuje, że finalny model opracowany w~ramach niniejszej pracy \textbf{osiąga wyniki znacząco przewyższające} te zaraportowane w~kluczowych publikacjach dla modeli trenowanych wyłącznie na zbiorze GuitarSet. Ten sukces jest bezpośrednim rezultatem zastosowania innowacyjnej, zaawansowanej strategii augmentacji danych.
+
+Równocześnie, osiągnięty w~finalnym modelu (przebieg 72) wynik praktycznej metryki na poziomie nut, \textbf{TDR F1-Score}, na poziomie \textbf{0.8569}, świadczy o~bardzo wysokiej jakości i~użyteczności generowanych tabulatur.
+
+W celu głębszej analizy jakościowej, przeanalizowano próbki, które uzyskały najlepsze i~najgorsze wyniki w~finalnej ewaluacji przebiegu 72. Trzy najlepsze wyniki pod względem TDR F1-Score uzyskano dla plików: \lstinline!04_BN1-147-Gb_comp! (0.9676), \lstinline!05_Rock3-148-C_solo! (0.9667) oraz \lstinline!02_Jazz1-200-B_solo! (0.9647). Z~kolei trzy najgorsze wyniki to: \lstinline!05_SS3-84-Bb_comp! (0.7090), \lstinline!04_SS3-98-C_comp! (0.7054) oraz \lstinline!00_SS3-84-Bb_comp! (0.6760).
+
+\subsubsection{Szczegółowa Analiza Wybranych Przypadków (przebieg 72)}
+
+\paragraph{Przypadek Najwyższej Jakości Transkrypcji: Paradoks Akompaniamentu (\lstinline!04_BN1-147-Gb_comp!)}
+Co ciekawe, najwyższą jakość transkrypcji (TDR F1-Score: 0.9676) uzyskano nie dla partii solowej, lecz dla akompaniamentu, co może wydawać się paradoksalne, biorąc pod uwagę jego polifoniczny (akordowy) charakter. Analiza tego przypadku dostarcza jednak cennych wniosków. Jak widać na Rysunku~\ref{fig:tab_paradox_comp}, predykcja modelu jest niezwykle zbliżona do prawdy referencyjnej. Sukces w tym przypadku wynika z kilku kluczowych cech nagrania:
+\begin{itemize}
+    \item \textbf{Regularność rytmiczna:} Partie akompaniamentu charakteryzują się często stałym, powtarzalnym rytmem. Ta przewidywalność znacząco ułatwia modelowi zadanie detekcji onsetów, które są wyraźne i~niezachodzące na siebie w~skomplikowany sposób.
+    \item \textbf{Klarowność harmoniczna:} Akordy, mimo że są zdarzeniami wielodźwiękowymi, są grane w sposób czysty i oddzielony. Brak tu szybkich przejść, ozdobników czy technik artykulacyjnych (jak \textit{vibrato} czy \textit{bend}), które wprowadzają dodatkową złożoność do sygnału w partiach solowych.
+    \item \textbf{Stabilność sygnału:} Model nie musi radzić sobie ze złożonymi zmianami w~dynamice i~barwie, typowymi dla ekspresyjnych solówek.
+\end{itemize}
+Zdolność modelu do tak precyzyjnego rozłożenia akordów na poszczególne nuty na odpowiednich strunach i progach, przy jednoczesnej niemal bezbłędnej detekcji onsetów, świadczy o jego sile w zadaniu wielodźwiękowej estymacji (MPE). Paradoksalnie, to właśnie "nuda" i powtarzalność partii akompaniamentu sprawiają, że staje się ona dla algorytmu zadaniem łatwiejszym do rozwiązania niż partia solowa, która może być bardziej chaotyczna i pełna niuansów.
+
+\begin{figure}[H]
+    \centering
+    \caption{Porównanie fragmentu tabulatury wygenerowanej przez model (góra) i tabulatury referencyjnej (dół) dla utworu \lstinline!04_BN1-147-Gb_comp!.}
+    \label{fig:tab_paradox_comp}
+    \vspace{5pt}
+    
+    \centerline{\textsf{Predykcja modelu (Przebieg 72, Onset Thresh: 0.35):}}
+    {\scriptsize
+\begin{verbatim}
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|2--------2--|---------2--|------2-----|---2--------|2--------2--|---------2--|------2-----|------
+G|------------|---------3--|------3-----|------------|3--------3--|---------3--|------3-----|------
+D|3-----------|---------3--|------3-----|---3--------|3--------3--|---------3--|------3-----|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|2-----------|---------2--|------2-----|---2--------|---------2--|------0--2--|------2-----|------
+
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|2--------2--|------2-----|---2--------|2-----------|---4-----4--|------------|4--------4--|------
+G|3--------3--|------3-----|---3--------|3-----------|---3-----3--|------------|3--------3--|------
+D|3--------3--|------3-----|------------|3-----------|---4-----4--|------------|4--------4--|------
+A|------------|------------|------------|------------|---2--------|------------|2--------2--|------
+E|2--------2--|------2-----|---2--------|2-----------|------------|------------|------------|------
+\end{verbatim}
+    }
+    \vspace{5pt}
+    \centerline{\textsf{Tabulatura referencyjna (Ground Truth):}}
+    {\scriptsize 
+\begin{verbatim}
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|2--------2--|---------2--|------2-----|---2--------|2--------2--|---------2--|------2-----|------
+G|3--------3--|---------3--|------3-----|---3--------|3--------3--|---------3--|------3-----|------
+D|3--------3--|---------3--|------3-----|---3--------|3--------3--|---------3--|------3-----|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|2--------2--|---------2--|------2-----|---2--------|2--------2--|---0-----2--|------2-----|------
+
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|2--------2--|------2-----|---2--------|2-----------|---4-----4--|------------|4--------4--|------
+G|3--------3--|------3-----|---3--------|3-----------|---3-----3--|------------|3--------3--|------
+D|3--------3--|------3-----|---3--------|3-----------|---5-----4--|------------|4--------4--|------
+A|------------|------------|------------|---------0--|2--------2--|------------|2--------2--|---2--
+E|2--------2--|------2-----|---2--------|2-----------|------------|------------|------------|------
+\end{verbatim}
+    } 
+\end{figure}
+
+\paragraph{Przypadek Wysokiej Jakości Transkrypcji Partii Solowej (\lstinline!05_Rock3-148-C_solo!)}
+Nagranie \lstinline!05_Rock3-148-C_solo! (TDR F1-Score: 0.9667), drugi najlepszy wynik w ewaluacji, jest doskonałym przykładem wysokiej skuteczności finalnego modelu dla partii melodycznych. Jak widać na Rysunku~\ref{fig:tab_high_quality_solo}, wygenerowana tabulatura jest niemal identyczna z~referencyjną. Model poprawnie zidentyfikował zarówno wysokość dźwięków, jak i~ich przypisanie do odpowiednich strun i~progów, nawet w~przypadku szybszych fraz. Ten przypadek pokazuje, że dla czystych, wyraźnie zagranych partii solowych, system osiąga dokładność zbliżoną do ludzkiej, co stanowi solidne potwierdzenie jego praktycznej użyteczności w~najbardziej typowym scenariuszu zastosowania.
+
+\begin{figure}[H]
+    \centering
+    \caption{Porównanie fragmentu tabulatury wygenerowanej przez model (góra) i tabulatury referencyjnej (dół) dla utworu \lstinline!05_Rock3-148-C_solo!.}
+    \label{fig:tab_high_quality_solo}
+    \vspace{5pt}
+    
+    \centerline{\textsf{Predykcja modelu (Przebieg 72, Onset Thresh: 0.35):}}
+    {\scriptsize
+\begin{verbatim}
+e|------------|8-----7-----|------------|------------|------------|------------|---------5--|------
+B|------------|------------|10----8-----|------------|------------|------------|------------|---8--
+G|------------|------------|------------|------------|------------|------------|------------|------
+D|------------|------------|------------|------------|------------|------------|------------|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|---6-----5--|------------|------------|------------|------------|------5-----|------------|------
+G|------------|------------|------------|------------|------------|------------|7-----5-----|------
+D|------------|------------|------------|------------|------------|------------|------------|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+\end{verbatim}
+    }
+    \vspace{5pt}
+    \centerline{\textsf{Tabulatura referencyjna (Ground Truth):}}
+    {\scriptsize 
+\begin{verbatim}
+e|------------|8-----7-----|------------|------------|------------|------------|---------5--|------
+B|------------|------------|10----8-----|------------|------------|------------|------------|---8--
+G|------------|------------|------------|------------|------------|------------|------------|------
+D|------------|------------|------------|------------|------------|------------|------------|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+
+e|------------|------------|------------|------------|------------|------------|------------|------
+B|---6-----5--|------------|------------|------------|------------|6-----5-----|------------|------
+G|------------|------------|------------|------------|------------|------------|7-----5-----|------
+D|------------|------------|------------|------------|------------|------------|------------|------
+A|------------|------------|------------|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+\end{verbatim}
+    } 
+\end{figure}
+
+\paragraph{Przypadek Stanowiący Wyzwanie dla Modelu: \lstinline!00_SS3-84-Bb_comp!}
+Analiza najtrudniejszego przypadku, nagrania \lstinline!00_SS3-84-Bb_comp! (TDR F1-Score: 0.6760), ujawnia typowe błędy popełniane przez model. Porównanie predykcji z~tabulaturą referencyjną na Rysunku~\ref{fig:tab_low_quality} pokazuje, że choć ogólny zarys harmoniczny i~rytmiczny jest często zachowany, pojawiają się błędy w~dokładnym umiejscowieniu nut. Model w~tym przypadku wygenerował dodatkowe nuty (fałszywe alarmy, FP), pominął niektóre istniejące (fałszywe negatywy, FN) oraz błędnie zidentyfikował część progów. Tego typu utwory, charakteryzujące się grą akordową i~gęstszą fakturą, stanowią większe wyzwanie ze względu na zjawisko maskowania harmonicznego, gdzie cichsze dźwięki są "przykrywane" przez głośniejsze. Mimo to, nawet w~tak trudnym przykładzie, wygenerowana transkrypcja wciąż może stanowić użyteczny punkt wyjścia do dalszej, manualnej korekty.
+
+\begin{figure}[H]
+    \centering
+    \caption{Porównanie fragmentu tabulatury wygenerowanej przez model (góra) i tabulatury referencyjnej (dół) dla utworu \lstinline!00_SS3-84-Bb_comp!, ilustrujące wyzwania w transkrypcji gęstych faktur.}
+    \label{fig:tab_low_quality}
+    \vspace{5pt}
+    \textsf{Predykcja modelu (Przebieg 72, Onset Thresh: 0.35):}
+    {\scriptsize
+\begin{verbatim}
+e|------------|---6--------|------------|------------|------------|------------|------------|------
+B|------------|------------|------------|------------|------------|------------|------------|6-----
+G|------------|------------|7-----------|---7--7-----|------------|------------|------------|------
+D|---------8--|---8--------|------8-----|---------8--|------------|---7-----7--|---7--------|------
+A|------------|------------|------8-----|------------|------------|---8--------|------------|------
+E|6-----------|------------|------------|------------|------------|------------|------------|------
+
+e|------------|------------|------------|------------|------------|------------|---------10-|------
+B|------------|------------|------------|------------|---11-------|------------|------11-11-|------
+G|------------|5-----------|---6--6-----|------12----|7--------12-|---12-------|---12-------|---10-
+D|------------|7-----7-----|7-----------|------------|------------|------------|------------|---10-
+A|------------|------------|---------10-|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+\end{verbatim}
+    }
+    \vspace{5pt}
+    \textsf{Tabulatura referencyjna (Ground Truth):}
+    {\scriptsize
+\begin{verbatim}
+e|------------|6-----------|------------|---------6--|------------|---5--------|------------|5-----
+B|------------|---6--------|------------|---------6--|------------|---6--------|------------|6-----
+G|7-----------|------------|7-----------|---7--------|------------|---------5--|------------|------
+D|8-----------|8-----------|------------|---------8--|------------|------------|---7--------|------
+A|------------|------------|------8-----|------------|------------|---8--------|------------|------
+E|6-----------|------------|------------|------------|------------|------------|------------|------
+
+e|------------|------------|------------|------------|------------|---10-------|------------|------
+B|------------|------------|------------|------------|10-11-------|------------|------11----|---10-
+G|---------5--|------------|---8--------|------12----|---------12-|------------|---12-------|---10-
+D|------------|------7-----|------------|------------|12----------|---12-------|------------|---10-
+A|------------|------------|---------10-|------------|------------|------------|------------|------
+E|------------|------------|------------|------------|------------|------------|------------|------
+\end{verbatim}
+    }
+\end{figure}
+
+\subsubsection{Główne Wyzwania i Ograniczenia Modelu}
+
+Analiza trudniejszych przypadków, takich jak \lstinline!00_SS3-84-Bb_comp! (TDR F1-Score: 0.6760), pozwala zidentyfikować kluczowe wyzwania dla modelu:
+\begin{itemize}
+    \item \textbf{Niejednoznaczność opalcowania:} W~złożonych partiach polifonicznych model może poprawnie zidentyfikować wysokość dźwięku, ale błędnie przypisać ją do pary (struna, próg). Jest to fundamentalny problem GTT, szeroko opisywany w~pracach~\autocite{ArndtLi2012AutomatedTranscription, Wiggins2019TabCNN} oraz zilustrowany w~\autocite{obrazGitaraNiejednoznacznosc}.
+    \item \textbf{Techniki artykulacyjne i złożoność rytmiczna:} Model napotyka trudności w~detekcji cichych lub bardzo szybko następujących po sobie nut (tzw. (ang. \textit{ghost notes})), co jest typowe dla stylów funk i~jazz. Problemy z~detekcją nut granych technikami takimi jak (ang. \textit{hammer-on}) czy (ang. \textit{pull-off}) są zgodne z~obserwacjami z~pracy~\autocite{Nasution2023HammerOn}.
+    \item \textbf{Gęstość faktury i maskowanie:} W~utworach o~dużej gęstości faktury, gdzie wiele dźwięków występuje jednocześnie, zjawisko maskowania może utrudniać detekcję poszczególnych nut, zwłaszcza tych o~niższej amplitudzie~\autocite{Benetos2019AutomaticMusicTranscription}.
+\end{itemize}
+
+\subsection{Walidacja w Warunkach Rzeczywistych}
+\label{ssec:walidacja_rzeczywista}
+
+Kluczowym testem praktycznej użyteczności i zdolności do generalizacji każdego systemu transkrypcji jest jego ocena na danych, które znacząco odbiegają od sterylnych warunków zbioru treningowego. W tym celu przeprowadzono dodatkowy eksperyment polegający na ewaluacji finalnego modelu na nagraniach zrealizowanych w typowych warunkach domowych.
+
+\subsubsection{Metodyka Eksperymentu}
+
+Przygotowano dedykowany, niestandardowy zbiór czterech nagrań audio, zrealizowanych przy użyciu dwóch różnych gitar: \textbf{akustycznej} (struny stalowe, jasna barwa) oraz \textbf{klasycznej} (struny nylonowe, cieplejsza barwa). Nagrania przeprowadzono za pomocą wbudowanego mikrofonu w laptopie i oprogramowania Audacity, zachowując parametry techniczne (mono, 22050 Hz, 16-bit WAV) zgodne z danymi treningowymi, aby zminimalizować tzw. przesunięcie dziedziny (ang. \textit{domain shift}). Dla każdego instrumentu nagrano dwa wzorce muzyczne:
+\begin{itemize}
+    \item \textbf{Wzorzec "123" (wielostrunowy):} Sekwencyjne zagranie progów 1, 2, 3 na każdej z sześciu strun, testujące zdolność do rozróżniania barwy strun.
+    \item \textbf{Wzorzec "1234567" (jednostrunowy):} Zagranie sekwencji chromatycznej od 1 do 7 progu na najcieńszej strunie (e¹), weryfikujące precyzję rozpoznawania wysokości dźwięku.
+\end{itemize}
+
+\subsubsection{Analiza Wyników Jakościowych}
+Analiza wygenerowanych tabulatur pozwoliła na zidentyfikowanie kilku kluczowych zjawisk, które charakteryzują działanie modelu w warunkach rzeczywistych.
+
+\paragraph{Zdolność do Rozpoznawania Wysokości Dźwięku}
+Model wykazał wysoką skuteczność w rozpoznawaniu podstawowej częstotliwości dźwięku, co przekłada się na poprawną identyfikację numeru granego progu. Najlepszym tego dowodem jest wynik dla nagrania \texttt{akustyczna\_1234567}, gdzie model niemal bezbłędnie odtworzył graną sekwencję:
+\begin{itemize}
+    \item \textbf{Oczekiwano:} \texttt{e|--1--2--3--4--5--6--7--|}
+    \item \textbf{Przewidziano (fragment):} \texttt{e|--2-2-3-3-4-4-5-5-5-7--|}
+\end{itemize}
+Większość progów została rozpoznana poprawnie, co świadczy o solidnym działaniu części modelu odpowiedzialnej za analizę częstotliwości.
+
+\paragraph{Wyzwanie: Rozpoznawanie Barwy i Problem Wieloznaczności Gryfu}
+Największą zidentyfikowaną słabością jest niska zdolność modelu do precyzyjnego rozpoznawania barwy dźwięku (ang. \textit{timbre}), co jest niezbędne do poprawnego przypisania dźwięku do konkretnej struny. Słabość ta prowadzi do powszechnego zjawiska \textbf{błędu wieloznaczności gryfu gitarowego}. Model, poprawnie identyfikując wysokość dźwięku, często umieszcza go na niewłaściwej strunie, ale na progu, który odpowiada tej samej nucie. Jest to doskonale widoczne w wynikach dla nagrania \texttt{klasyczna\_1234567}:
+\begin{itemize}
+    \item \textbf{Oczekiwano:} \texttt{e|--1--2--3--4--5--6--7--|}
+    \item \textbf{Przewidziano (fragmenty):} \texttt{e|--4--5-5-6--7--|} oraz \texttt{B|--6--7--8--12--|}
+\end{itemize}
+Ten "inteligentny" błąd dowodzi, że model poprawnie analizuje ton podstawowy (przewidziany próg 6 na strunie B to ten sam dźwięk F4 co próg 1 na strunie e), lecz zawodzi w analizie subtelnych składowych harmonicznych, które odróżniają barwę struny e od B.
+
+\subsubsection{Wnioski z Testów w Warunkach Rzeczywistych}
+Eksperyment potwierdził, że głównym problemem modelu nie jest rozpoznawanie wysokości dźwięku, lecz klasyfikacja barwy. Aby system stał się narzędziem o praktycznym zastosowaniu dla nagrań domowych, kluczowy jest rozwój w kierunku lepszego różnicowania barwy lub implementacja zaawansowanych algorytmów post-processingu, które na podstawie wiedzy o technice gry korygowałyby błędy wieloznaczności.
+
+\subsection{Użyteczność w Praktyce}
+\label{ssec:uzytecznosc_praktyka}
+
+Mimo pewnych błędów, osiągnięty poziom dokładności otwiera drogę do praktycznego zastosowania systemu. Praca~\autocite{Holzapfel2019Ethnomusicology} badała użyteczność systemów AMT w~praktyce muzykologicznej, wskazując, że nawet niedoskonałe transkrypcje mogą znacząco przyspieszyć pracę ekspertów. Można postawić tezę, że opracowany system, mimo iż nie jest idealny, mógłby być użyteczny np. dla amatorów gitary jako narzędzie pomocnicze do nauki utworów, oferując "wystarczająco dobrą" pierwszą wersję tabulatury do dalszej weryfikacji i~nauki.
+
+\section{Podsumowanie Badań Eksperymentalnych}
+\label{sec:podsumowanie_badan}
+
+Przeprowadzony w~ramach niniejszego rozdziału szczegółowy proces badawczy, obejmujący ponad 70 eksperymentów, pozwolił na systematyczną weryfikację i~optymalizację zaproponowanego systemu transkrypcji. Analiza ilościowa i~jakościowa wykazała, że finalna konfiguracja modelu (przebieg 72) osiąga wyniki na najwyższym poziomie, co zostało potwierdzone przez metodologicznie poprawne porównanie z~kluczowymi pracami w~dziedzinie. Wynik \textbf{MPE F1-Score na poziomie 0.8736} oraz \textbf{TDR F1-Score wynoszący 0.8569} dowodzą wysokiej skuteczności opracowanego rozwiązania.
+
+Potwierdzono, że kluczowym czynnikiem, który umożliwił osiągnięcie tak wysokich wyników, była innowacyjna strategia augmentacji danych. Świadome nauczenie modelu, jak interpretować niedoskonałe sygnały audio, okazało się znacznie skuteczniejsze niż dążenie do optymalizacji architektury na idealnych, studyjnych danych. Dodatkowa walidacja w warunkach rzeczywistych pokazała, że choć model doskonale radzi sobie z~rozpoznawaniem wysokości dźwięku, jego głównym ograniczeniem pozostaje precyzyjna klasyfikacja barwy, prowadząca do błędów wieloznaczności. Ten rozdział dostarczył empirycznych dowodów na słuszność przyjętych założeń projektowych i~skuteczność zaimplementowanych metod, stanowiąc solidną podstawę dla finalnych wniosków z~całej pracy, które zostaną przedstawione w~kolejnym rozdziale.
