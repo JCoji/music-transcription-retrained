@@ -11,9 +11,17 @@
 \contentsline {table}{\numberline {2.2}{\ignorespaces Porównanie standardowej notacji muzycznej i~tabulatury gitarowej.}}{24}{table.caption.17}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {4.1}{\ignorespaces Parametry środowiska eksperymentalnego.}}{46}{table.caption.24}%
-\contentsline {table}{\numberline {4.2}{\ignorespaces Parametry ekstrakcji cech dla badanych reprezentacji sygnału.}}{46}{table.caption.25}%
-\contentsline {table}{\numberline {4.3}{\ignorespaces Kompleksowe porównanie metryk dla kluczowych modeli na zbiorze testowym.}}{51}{table.caption.35}%
+\contentsline {table}{\numberline {4.1}{\ignorespaces Parametry środowiska eksperymentalnego.}}{48}{table.caption.24}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Parametry ekstrakcji cech dla badanych reprezentacji sygnału.}}{49}{table.caption.25}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Kluczowe etapy ewolucji architektury modelu (ocena na zbiorze testowym).}}{51}{table.caption.28}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Porównanie wpływu rozmiaru wsadu na wyniki (wybrane przebiegi).}}{52}{table.caption.31}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Analiza wpływu wagi straty dla detekcji onsetów.}}{53}{table.caption.33}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Analiza wpływu wagi dla przykładów pozytywnych w~detekcji onsetów.}}{53}{table.caption.34}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Porównanie wpływu początkowego współczynnika uczenia.}}{53}{table.caption.36}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Analiza wpływu cierpliwości harmonogramu.}}{54}{table.caption.37}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Porównanie wpływu różnych strategii augmentacji na wynik TDR F1-Score (zbiór testowy).}}{55}{table.caption.39}%
+\contentsline {table}{\numberline {4.10}{\ignorespaces Kompleksowe porównanie metryk dla kluczowych modeli na zbiorze testowym. Pogrubione wartości wskazują najlepszy wynik uzyskany dla danej metryki.}}{56}{table.caption.40}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Zestawienie najlepszych i najgorszych wyników transkrypcji (TDR F1-Score) uzyskanych przez model finalny (przebieg 72) na zbiorze testowym.}}{57}{table.caption.44}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

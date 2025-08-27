@@ -4,30 +4,36 @@
 \section*{Skróty}
 \begin{itemize}
     \item ATM – Automatyczna Transkrypcja Muzyczna (ang. \textit{Automatic Music Transcription})
+    \item BiGRU – Dwukierunkowa rekurencyjna sieć neuronowa z jednostkami GRU (ang. \textit{Bidirectional Gated Recurrent Unit})
     \item CNN – Splotowa Sieć Neuronowa (ang. \textit{Convolutional Neural Network})
-    \item CQT – Transformata Constant-Q (ang. \textit{Constant-Q Transform})
     \item CPS – Cyfrowe Przetwarzanie Sygnałów (ang. \textit{Digital Signal Processing – DSP})
     \item CRNN – Konwolucyjno-Rekurencyjna Sieć Neuronowa (ang. \textit{Convolutional Recurrent Neural Network})
+    \item CQT – Transformata Constant-Q (ang. \textit{Constant-Q Transform})
     \item DAW – Cyfrowa stacja robocza audio (ang. \textit{Digital Audio Workstation})
     \item DFT – Dyskretna Transformata Fouriera (ang. \textit{Discrete Fourier Transform})
     \item DL – Głębokie Uczenie (ang. \textit{Deep Learning})
-    \item FN – Fałszywe negatywy (ang. \textit{False Negatives})
-    \item FP – Fałszywe pozytywy (ang. \textit{False Positives})
+    \item EQ – Korekcja barwy dźwięku (ang. \textit{Equalization})
+    \item FN – Fałszywie negatywne (ang. \textit{False Negatives})
+    \item FP – Fałszywie pozytywne (ang. \textit{False Positives})
     \item GRU – Bramkowana Jednostka Rekurencyjna (ang. \textit{Gated Recurrent Unit})
     \item GTT – Transkrypcja Gitarowa na Tabulaturę (ang. \textit{Guitar Tablature Transcription})
     \item HMM – Ukryte Modele Markowa (ang. \textit{Hidden Markov Models})
+    \item HPS – Spektrum harmoniczne iloczynu (ang. \textit{Harmonic Product Spectrum})
     \item JAMS – JSON Annotated Music Specification
+    \item LR – Współczynnik uczenia (ang. \textit{Learning Rate})
     \item LSTM – Długa Pamięć Krótkoterminowa (ang. \textit{Long Short-Term Memory})
     \item MIR – Komputerowe Pozyskiwanie Informacji Muzycznej (ang. \textit{Music Information Retrieval})
     \item MPE – Estymacja Wielokrotnej Wysokości Dźwięku (ang. \textit{Multiple Pitch Estimation})
+    \item NMP – Noty i multipitch (ang. \textit{Notes and Multipitch})
     \item NMF – Nieujemna Faktoryzacja Macierzy (ang. \textit{Non-negative Matrix Factorization})
     \item PLCA – Probabilistyczna Analiza Składowych Ukrytych (ang. \textit{Probabilistic Latent Component Analysis})
     \item RNN – Rekurencyjna Sieć Neuronowa (ang. \textit{Recurrent Neural Network})
     \item SI – Sztuczna Inteligencja (ang. \textit{Artificial Intelligence – AI})
     \item STFT – Krótkoczasowa Transformata Fouriera (ang. \textit{Short-Time Fourier Transform})
     \item TDR – Współczynnik Detekcji Tabulatury (ang. \textit{Tablature Detection Rate})
-    \item TP – Prawdziwe pozytywy (ang. \textit{True Positives})
+    \item TP – Prawdziwie pozytywne (ang. \textit{True Positives})
     \item UM – Uczenie Maszynowe (ang. \textit{Machine Learning – ML})
+    \item VRAM – Pamięć graficzna (ang. \textit{Video Random-Access Memory})
 \end{itemize}
 
 \section*{Symbole Matematyczne}
@@ -35,11 +41,20 @@
     \item $F_0$ – Częstotliwość podstawowa
     \item $X_k$ – k-ty współczynnik dyskretnej transformaty Fouriera
     \item $x_n$ – n-ta próbka sygnału w dziedzinie czasu
+    \item $k$ – Indeks częstotliwości (w kontekście DFT)
+    \item $n$ – Indeks próbki w dziedzinie czasu (w kontekście DFT)
     \item $N$ – Długość ciągu próbek sygnału (w kontekście DFT)
     \item $i$ – Jednostka urojona
     \item $\mathcal{L}_{\text{total}}$ – Całkowita funkcja straty modelu
     \item $\mathcal{L}_{\text{onset}}$ – Komponent funkcji straty dla predykcji onsetów
     \item $\mathcal{L}_{\text{fret}}$ – Komponent funkcji straty dla predykcji progów
     \item $w_{\text{onset}}, w_{\text{fret}}$ – Wagi dla komponentów funkcji straty
+    \item $w_{\text{pos}}$ – Waga dla przykładów pozytywnych w detekcji onsetów
+    \item $y_{s,t}^{\text{onset}}$ – Etykieta referencyjna dla onsetu (binarna)
+    \item $\hat{z}_{s,t}^{\text{onset}}$ – Logit wyjściowy modelu dla onsetu
     \item $\sigma(\cdot)$ – Funkcja aktywacji sigmoid
+    \item $F_{\text{min}}$ – Minimalna częstotliwość (w kontekście CQT)
+    \item $y_{s,t,c}^{\text{fret}}$ – Binarny wskaźnik dla klasy progu $c$ dla struny $s$ i ramki $t$
+    \item $p_{s,t,c}^{\text{fret}}$ – Prawdopodobieństwo predykcji dla klasy progu $c$ dla struny $s$ i ramki $t$
+    \item $N_{\text{klas progu}}$ – Liczba klas progów (z uwzględnieniem ciszy)
 \end{itemize}
