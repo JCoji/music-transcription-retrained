@@ -211,11 +211,11 @@ def process_single_hyperparameter_run(
 
     model_init_params = {
         "num_frames_rnn_input_dim": calculated_cnn_out_dim,
-        "rnn_type": hyperparams_combo.get("RNN_TYPE", "LSTM"),
+        "rnn_type": hyperparams_combo.get("RNN_TYPE", config_obj.RNN_TYPE_DEFAULT),
         "rnn_hidden_size": hyperparams_combo["RNN_HIDDEN_SIZE"],
         "rnn_layers": hyperparams_combo["RNN_LAYERS"],
         "rnn_dropout": hyperparams_combo["RNN_DROPOUT"],
-        "rnn_bidirectional": hyperparams_combo.get("RNN_BIDIRECTIONAL", False),
+        "rnn_bidirectional": hyperparams_combo.get("RNN_BIDIRECTIONAL", config_obj.RNN_BIDIRECTIONAL_DEFAULT),
     }
     current_model = architecture.GuitarTabCRNN(**model_init_params)
     current_model.to(device)

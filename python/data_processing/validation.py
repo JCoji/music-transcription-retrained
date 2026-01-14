@@ -20,25 +20,8 @@ def validate_tensor_shapes_and_types(data_sample, track_identifier, shape_params
         print(f"  [FAIL] {track_identifier} - cqt: brakujący klucz lub obiekt nie jest tensorem")
         is_valid = False
 
-    if 'mel' in data_sample and isinstance(data_sample['mel'], torch.Tensor):
-        if calculated_num_frames == -1 and data_sample['mel'].ndim == 2:
-            calculated_num_frames = data_sample['mel'].shape[1]
-
-        if not (data_sample['mel'].ndim == 2 and data_sample['mel'].shape[0] == shape_params['N_MELS_MEL'] and
-                data_sample['mel'].shape[1] == calculated_num_frames):
-            print(
-                f"  [FAIL] {track_identifier} - mel: nieoczekiwany kształt {data_sample['mel'].shape}. Oczekiwano [{shape_params['N_MELS_MEL']}, {calculated_num_frames}]")
-            is_valid = False
-        if data_sample['mel'].dtype != torch.float32:
-            print(
-                f"  [FAIL] {track_identifier} - mel: typ danych to {data_sample['mel'].dtype}, oczekiwano torch.float32")
-            is_valid = False
-    else:
-        print(f"  [FAIL] {track_identifier} - mel: brakujący klucz lub obiekt nie jest tensorem")
-        is_valid = False
-
     if calculated_num_frames == -1:
-        print(f"  [FAIL] {track_identifier} - Nie można ustalić liczby ramek (calculated_num_frames) z CQT lub Mel.")
+        print(f"  [FAIL] {track_identifier} - Nie można ustalić liczby ramek (calculated_num_frames) z CQT.")
         return False
 
     for data_key, expected_shape_dim1_key, expected_tensor_dtype in [
@@ -89,15 +72,14 @@ def validate_tensor_values(data_sample, track_identifier):
         if tensor_to_check.sum() == 0.0:
             print(f"  [WARN] {track_identifier} - string_contours: wszystkie wartości to 0.")
 
-    for data_key in ['cqt', 'mel']:
-        if data_key in data_sample and isinstance(data_sample[data_key], torch.Tensor):
-            tensor_to_check = data_sample[data_key]
-            if torch.isnan(tensor_to_check).any():
-                print(f"  [FAIL] {track_identifier} - {data_key}: zawiera wartości NaN.")
-                is_valid = False
-            if torch.isinf(tensor_to_check).any():
-                print(f"  [FAIL] {track_identifier} - {data_key}: zawiera wartości Inf.")
-                is_valid = False
+    if 'cqt' in data_sample and isinstance(data_sample['cqt'], torch.Tensor):
+        tensor_to_check = data_sample['cqt']
+        if torch.isnan(tensor_to_check).any():
+            print(f"  [FAIL] {track_identifier} - cqt: zawiera wartości NaN.")
+            is_valid = False
+        if torch.isinf(tensor_to_check).any():
+            print(f"  [FAIL] {track_identifier} - cqt: zawiera wartości Inf.")
+            is_valid = False
     return is_valid
 
 
@@ -128,7 +110,7 @@ def run_full_data_validation(dataset_to_validate, validation_shape_params):
 
             print(f"\nWalidacja ścieżki {item_idx + 1}/{len(dataset_to_validate)}: {current_track_id}")
 
-            required_keys = ['track_id', 'cqt', 'mel', 'pitch_active', 'onsets', 'offsets', 'string_contours']
+            required_keys = ['track_id', 'cqt', 'pitch_active', 'onsets', 'offsets', 'string_contours']
             if not all(key in current_data_item for key in required_keys):
                 missing_keys_list = [key for key in required_keys if key not in current_data_item]
                 print(f"  [FAIL] {current_track_id} - Brakujące klucze: {', '.join(missing_keys_list)}")

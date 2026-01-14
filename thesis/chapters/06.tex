@@ -1,1 +1,183 @@
 \chapter{Dokumentacja techniczna}
+\label{chap:dokumentacja_techniczna}
+
+\section*{Architektura systemu}
+\label{sec:tech_architektura}
+
+Zaprojektowany system do automatycznej transkrypcji gitarowej na zapis tabulaturowy GTT opiera się na modułowej architekturze potokowej (\english{pipeline}), co zapewniało elastyczność i ułatwiało systematyczne prowadzenie ponad 70 eksperymentów. Poniżej przedstawiono schematycznie główne komponenty systemu oraz przepływ danych, który pozostawał spójny w całym procesie badawczym.
+
+\begin{verbatim}
+[Sygnał Audio .wav] -> [1. Przetwarzanie wstępne] -> [2. Model Neuronowy]
+     -> [3. Przetwarzanie końcowe] -> [Tabulatura]
+\end{verbatim}
+
+\begin{enumerate}
+    \item Przetwarzanie wstępne (\english{Preprocessing}): Surowy sygnał audio jest ładowany i transformowany do postaci spektrogramu. Ta reprezentacja czasowo-częstotliwościowa jest znacznie bardziej informatywna dla sieci neuronowej niż surowe próbki sygnału.
+
+    \item Model sieci neuronowej (Inferencja): Przetworzone dane są wprowadzane do wytrenowanego modelu głębokiego uczenia. Model analizuje spektrogram segment po segmencie i generuje predykcje dotyczące aktywności poszczególnych nut (kombinacji struna-próg) w każdej ramce czasowej.
+
+    \item Przetwarzanie końcowe (\english{Post-processing}): Surowe predykcje z modelu (wartości prawdopodobieństwa) są przetwarzane w celu wygenerowania finalnej, czytelnej tabulatury. Ten etap obejmuje progowanie binarne, odrzucanie krótkotrwałych, błędnych detekcji oraz formatowanie danych wyjściowych.
+\end{enumerate}
+
+\section*{Środowisko i zależności technologiczne}
+\label{sec:tech_srodowisko}
+
+System został zaimplementowany w języku \textbf{Python 3.9}. Do jego uruchomienia oraz treningu modelu niezbędne są następujące biblioteki, wyszczególnione w pliku \texttt{requirements.txt}:
+
+\begin{itemize}
+    \item PyTorch: Główny \english{framework} do budowy i trenowania modeli głębokiego uczenia.
+    \item Librosa: Specjalistyczna biblioteka do analizy i przetwarzania sygnałów audio, wykorzystywana do wczytywania plików, ekstrakcji cech i generowania spektrogramów.
+    \item NumPy: Fundamentalna biblioteka do obliczeń naukowych, używana do operacji na macierzach i danych numerycznych.
+    \item Pandas: Biblioteka do manipulacji i analizy danych, przydatna w zarządzaniu metadanymi i wynikami.
+    \item Matplotlib: Biblioteka do tworzenia wizualizacji i wykresów, używana do analizy wyników i debugowania.
+    \item Jupyter Notebook/Lab: Interaktywne środowisko (\texttt{guitar\_ATM.ipynb}) używane do orkiestracji procesu badawczego, demonstracji i wizualizacji działania systemu.
+\end{itemize}
+
+Trening modelu, ze względu na jego złożoność obliczeniową, został przeprowadzony z wykorzystaniem akceleracji sprzętowej GPU (NVIDIA), co znacząco skróciło czas potrzebny na eksperymenty.
+
+\section*{Przetwarzanie danych}
+\label{sec:tech_dane}
+
+Jakość i sposób przygotowania danych były kluczowe dla skuteczności modelu. Proces ten, podlegający ewolucji w toku badań, został podzielony na kilka etapów.
+
+\subsection*{Źródło danych}
+
+Model został wytrenowany na publicznie dostępnym zbiorze danych \textbf{GuitarSet}, który zawiera 360 fragmentów muzycznych nagranych na gitarze akustycznej. Kluczową zaletą tego zbioru jest precyzyjna adnotacja, zawierająca nie tylko informacje o wysokości i czasie trwania dźwięków, ale również dokładne dane o numerze struny i progu, co jest niezbędne do treningu modelu generującego tabulatury.
+
+\subsection*{Preprocessing sygnału audio}
+
+Celem preprocessingu jest konwersja sygnału audio do postaci, która jest optymalna dla modelu konwolucyjnej sieci neuronowej. Kroki te są zaimplementowane w module \texttt{data\_processing/preparation.py}.
+
+\begin{enumerate}
+    \item Wczytanie i resampling: Pliki audio w formacie \texttt{.wav} są wczytywane przy użyciu biblioteki \texttt{librosa}. Następnie ich częstotliwość próbkowania jest standaryzowana do \textbf{22050 Hz}, aby zapewnić spójność danych wejściowych.
+    \item Ekstrakcja cech – Spektrogram CQT: W wyniku eksperymentów bazowych, jako preferowaną reprezentację sygnału wybrano \textbf{transformatę Constant-Q (CQT)}. Wykazała ona wyższą skuteczność niż standardowy spektrogram STFT, ponieważ jej logarymiczna skala częstotliwości lepiej odpowiada percepcji muzyki i tworzy wzorce harmoniczne niezmiennicze względem transpozycji.
+    \item Normalizacja: Amplitudy spektrogramu są normalizowane do zakresu [0, 1], co stabilizuje proces uczenia.
+    \item Segmentacja i augmentacja: Spektrogramy i odpowiadające im adnotacje są dzielone na krótkie, nakładające się na siebie segmenty (ramki). Kluczowym elementem, który wyewoluował w trakcie badań, była data-centryczna strategia augmentacji, stosowana dynamicznie na etapie tworzenia wsadów treningowych.
+\end{enumerate}
+
+\subsection*{Reprezentacja etykiet (\english{ground truth})}
+
+Etykiety ze zbioru GuitarSet są konwertowane do formatu macierzowego, tzw. \english{"piano rolla"} lub w tym przypadku \english{"guitar rolla"}. Jest to macierz, w której:
+\begin{itemize}
+    \item Jedna oś reprezentuje czas (w korelacji z ramkami spektrogramu).
+    \item Druga oś reprezentuje wszystkie możliwe do zagrania nuty na gitarze.
+\end{itemize}
+Wyjście modelu ma postać \textbf{wektora multi-hot}. Dla standardowej 6-strunowej gitary z 20 progami (plus struny puste), wektor wyjściowy ma długość $6 \times (20 + 1) = 126$. Każdy element wektora odpowiada jednej konkretnej nucie (kombinacji struna-próg). Wartość `1` na danej pozycji oznacza, że nuta jest aktywna w danej ramce czasowej, a `0` – że jest nieaktywna.
+
+\section*{Architektura modelu}
+\label{sec:tech_model}
+
+Centralnym komponentem systemu jest głęboka sieć neuronowa, której finalna architektura, zdefiniowana w pliku \texttt{model/architecture.py}, została wyłoniona w drodze iteracyjnego procesu badawczego. Jest to model hybrydowy, łączący w sobie cechy \textbf{Konwolucyjnych Sieci Neuronowych} oraz \textbf{Rekurencyjnych Sieci Neuronowych}.
+
+\subsection*{Struktura warstw}
+
+\begin{enumerate}
+    \item Warstwa wejściowa (\english{Input Layer}): Przyjmuje segmenty spektrogramu CQT o predefiniowanym wymiarze (np. \texttt{(liczba\_binow\_CQT, dlugosc\_segmentu, 1)}).
+    \item Bloki konwolucyjne:
+    \begin{itemize}
+        \item Kilka następujących po sobie warstw \texttt{Conv2D} z aktywacją \textbf{ReLU}. Ich zadaniem jest ekstrakcja hierarchicznych cech z obrazu spektrogramu – od prostych krawędzi i tekstur po bardziej złożone wzorce odpowiadające atakom dźwięku, harmonicznym i barwie instrumentu.
+        \item Po warstwach konwolucyjnych następują warstwy \texttt{MaxPooling2D}, które redukują wymiarowość map cech, zwiększając pole recepcyjne i zapewniając pewną niezmienność na drobne przesunięcia.
+    \end{itemize}
+    \item Reorganizacja tensora dla RNN: Po przejściu przez bloki CNN, mapy cech są przekształcane do postaci sekwencyjnej, aby przygotować dane dla warstw rekurencyjnych.
+    \item Bloki rekurencyjne:
+    \begin{itemize}
+        \item W finalnej, zoptymalizowanej architekturze zastosowano \textbf{dwuwarstwowe, dwukierunkowe warstwy GRU}. Wybór ten był wynikiem eksperymentów, które wykazały przewagę komórek GRU nad LSTM oraz kluczowe znaczenie mechanizmu dwukierunkowego, pozwalającego sieci analizować kontekst zarówno z przeszłych, jak i przyszłych ramek czasowych.
+    \end{itemize}
+    \item Warstwy gęste (\english{Dense Layers}): Wyjście z warstw RNN jest przetwarzane przez kilka w pełni połączonych warstw \texttt{Dense}, które dokonują finalnej klasyfikacji.
+    \item Warstwa wyjściowa (\english{Output Layer}): Ostatnia warstwa \texttt{Dense} ma \textbf{126 neuronów} (dla 6 strun i 21 stanów progów) z funkcją aktywacji \textbf{Sigmoid}. Sigmoid na wyjściu każdej jednostki zwraca wartość z zakresu [0, 1], którą można interpretować jako prawdopodobieństwo, że dana nuta (struna-próg) jest aktywna w analizowanej ramce czasowej.
+\end{enumerate}
+
+\section*{Proces treningu}
+\label{sec:tech_trening}
+
+Proces uczenia modelu, zaimplementowany w modułach w katalogu \texttt{training}, stanowił elastyczną ramę dla przeprowadzonych eksperymentów. Kluczowe hiperparametry, takie jak wagi funkcji straty czy ustawienia optymalizatora, były systematycznie dostrajane w celu maksymalizacji wydajności.
+\begin{itemize}
+    \item Funkcja straty (\english{Loss Function}): Ze względu na charakter problemu (klasyfikacja wieloetykietowa), jako funkcję straty zastosowano \textbf{binarną entropię krzyżową}. Jest ona obliczana niezależnie dla każdej z 126 nut wyjściowych i następnie uśredniana.
+    \item Optymalizator: W wyniku testów porównawczych, do minimalizacji funkcji straty wybrano optymalizator \textbf{AdamW}, który w połączeniu z harmonogramem \textbf{ReduceLROnPlateau} zapewniał stabilniejszy przebieg treningu i lepszą generalizację niż standardowy Adam.
+    \item Metryki monitorujące: Podczas treningu monitorowano kluczowe metryki, takie jak precyzja, pełność oraz miara F1, zaimplementowane w \texttt{evaluation/metrics.py}. Pozwoliło to na bieżąco śledzić postępy w uczeniu i diagnozować problemy, takie jak przeuczenie (\english{overfitting}).
+    \item Przebieg trenowania: Trening odbywał się w pętli przez zadaną liczbę epok. W każdej epoce model przetwarzał cały zbiór treningowy w losowych partiach (\english{batches}). Po każdej epoce przeprowadzano walidację na osobnym zbiorze walidacyjnym, aby ocenić zdolność modelu do generalizacji.
+\end{itemize}
+
+\section*{Ewaluacja i inferencja}
+\label{sec:tech_ewaluacja}
+
+\subsection*{Metryki ewaluacyjne}
+
+Do końcowej oceny jakości modelu na zbiorze testowym wykorzystano metryki zdefiniowane w \texttt{evaluation/performance\_metrics.py}, specyficzne dla zadania AMT:
+\begin{itemize}
+    \item \english{Note-Based Metrics:} Ocena na poziomie pojedynczych nut, biorąca pod uwagę poprawność wysokości dźwięku, czasu rozpoczęcia i opcjonalnie czasu trwania.
+    \begin{itemize}
+        \item Precision: Jaki procent wykrytych nut był poprawny?
+        \item Recall: Jaki procent nut z oryginalnego nagrania został wykryty?
+        \item F1-Score: Średnia harmoniczna precyzji i pełności.
+    \end{itemize}
+    \item \english{Tablature-Based Metrics:} Bardziej rygorystyczna ocena, która uznaje nutę za poprawnie zidentyfikowaną tylko wtedy, gdy zarówno jej wysokość, jak i \textbf{lokalizacja na gryfie (struna i próg)} są zgodne z etykietą.
+\end{itemize}
+
+\subsection*{Proces inferencji i post-processingu}
+
+Transkrypcja nowego pliku audio (\texttt{.wav}) przebiega zgodnie z logiką przedstawioną w \texttt{guitar\_ATM.ipynb}, wykorzystując finalnie wytrenowany model:
+\begin{enumerate}
+    \item Wczytanie modelu: Załadowanie wag wytrenowanego modelu.
+    \item Preprocessing: Nowy plik audio przechodzi przez ten sam potok przetwarzania wstępnego, co dane treningowe (resampling, CQT, segmentacja).
+    \item Predykcja: Segmenty spektrogramu są kolejno podawane na wejście modelu, który zwraca macierz prawdopodobieństw o wymiarach \texttt{(liczba\_segmentow, 126)}.
+    \item Post-processing:
+    \begin{itemize}
+        \item Progowanie: Na macierzy prawdopodobieństw stosowany jest próg, którego optymalna wartość jest zależna od strategii treningowej i jest dobierana na zbiorze walidacyjnym/testowym.
+        \item Konwersja na listę nut: Macierz binarna jest konwertowana na listę zdarzeń muzycznych, zawierających informacje o (czasie rozpoczęcia, strunie, progu, czasie trwania).
+    \end{itemize}
+    \item Eksport tabulatury: Finalna lista nut jest formatowana i eksportowana do czytelnego pliku tekstowego, co realizuje moduł \texttt{evaluation/tablature\_export.py}.
+\end{enumerate}
+
+\section*{Struktura i opis kodu}
+\label{sec:tech_kod}
+
+Projekt został zorganizowany w sposób modułowy, aby zapewnić czytelność i łatwość w utrzymaniu kodu. Poniższy wykaz przedstawia strukturę katalogów, a w kolejnej sekcji opisano rolę kluczowych skryptów.
+
+\begin{lstlisting}[language=bash, caption={Wykaz struktury katalogów projektu.}, label={lst:struct}, deletekeywords={test}]
+/
+|-- _mir_datasets_storage/
+|   |-- annotation/
+|   |-- audio_hex-pickup_debleeded/
+|   |-- audio_hex-pickup_original/
+|   |-- audio_mono-mic/
+|   |-- audio_mono-pickup_mix/
+|-- _processed_guitarset_data/
+|   |-- test/
+|   |-- train/
+|   |-- validation/
+|   |-- test_ids.txt
+|   |-- train_ids.txt
+|   |-- validation_ids.txt
+|-- data_processing/
+|   |-- preparation.py
+|   |-- dataset.py
+|-- evaluation/
+|   |-- metrics.py
+|   |-- performance_metrics.py
+|   |-- tablature_export.py
+|-- model/
+|   |-- architecture.py
+|-- results/
+|-- test/
+|-- training/
+|   |-- pipeline.py
+|   |-- loss_functions.py
+|-- vizualization/
+|   |-- plotting.py
+|-- config.py
+|-- guitar_ATM.ipynb
+|-- requirements.txt
+\end{lstlisting}
+
+\subsection*{Opis kluczowych skryptów i modułów}
+
+\begin{itemize}
+    \item \texttt{guitar\_ATM.ipynb}: Główny notatnik Jupyter, pełniący rolę centrum sterowania dla całego procesu badawczego. Umożliwia on definiowanie, uruchamianie i monitorowanie pojedynczych eksperymentów, a także przeprowadzanie analizy wyników i generowanie wizualizacji.
+    \item \texttt{config.py}: Centralny plik konfiguracyjny, w którym zdefiniowano wszystkie globalne stałe i hiperparametry, takie jak ścieżki do danych, parametry ekstrakcji cech CQT, ustawienia augmentacji oraz domyślne konfiguracje architektury sieci i procesu treningu.
+    \item \texttt{data\_processing/}: Moduł odpowiedzialny za przygotowanie danych. Zawiera on skrypt \texttt{preparation.py}, implementujący logikę wczytywania sygnału, ekstrakcji cech i augmentacji, oraz \texttt{dataset.py}, który definiuje niestandardową klasę zbioru danych PyTorch.
+    \item \texttt{model/}: Zawiera definicję architektury sieci neuronowej. Plik \texttt{architecture.py} implementuje elastyczną klasę modelu CRNN, której parametry (np. liczba warstw, typ komórek rekurencyjnych) mogą być dynamicznie konfigurowane.
+    \item \texttt{training/}: Moduł grupujący logikę związaną z procesem uczenia. Skrypt \texttt{pipeline.py} zawiera główną pętlę treningową i walidacyjną, a \texttt{loss\_functions.py} implementuje wielozadaniową funkcję straty.
+    \item \texttt{evaluation/}: Zestaw narzędzi do oceny modelu. Implementacje metryk TDR i MPE znajdują się w skryptach \texttt{metrics.py} oraz \texttt{performance\_metrics.py}. Moduł zawiera również skrypt \texttt{tablature\_export.py}, odpowiadający za konwersję predykcji na czytelny format tabulatury tekstowej.
+    \item \texttt{vizualization/}: Moduł pomocniczy do generowania wykresów i wizualizacji, takich jak spektrogramy czy historie treningu, używany w notatniku głównym.
+\end{itemize}

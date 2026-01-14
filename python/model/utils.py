@@ -5,6 +5,7 @@ import json
 from model import (
     architecture,
 )
+import config
 
 
 def load_best_model(model_class, model_path, run_config_path, device):
@@ -38,11 +39,11 @@ def load_best_model(model_class, model_path, run_config_path, device):
 
         model_init_params = {
             "num_frames_rnn_input_dim": calculated_cnn_out_dim,
-            "rnn_type": hyperparams.get("RNN_TYPE", "LSTM"),
+            "rnn_type": hyperparams.get("RNN_TYPE", config.RNN_TYPE_DEFAULT),
             "rnn_hidden_size": hyperparams["RNN_HIDDEN_SIZE"],
             "rnn_layers": hyperparams["RNN_LAYERS"],
             "rnn_dropout": hyperparams["RNN_DROPOUT"],
-            "rnn_bidirectional": hyperparams.get("RNN_BIDIRECTIONAL", False),
+            "rnn_bidirectional": hyperparams.get("RNN_BIDIRECTIONAL", config.RNN_BIDIRECTIONAL_DEFAULT),
         }
 
         print(f"Odtworzone parametry inicjalizacyjne: {model_init_params}")

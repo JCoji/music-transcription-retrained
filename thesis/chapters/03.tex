@@ -194,7 +194,7 @@ Główna pętla treningowa iteruje przez zdefiniowaną liczbę epok. W~każdej e
 \end{algorithmic}
 \end{algorithm}
 
-W celu zapewnienia szybkości i~spójności procesu treningu, podczas fazy walidacyjnej w~każdej epoce stosowany jest stały próg decyzyjny (0.5) dla predykcji onsetów. Bardziej zaawansowany proces wyszukiwania optymalnego progu, który maksymalizuje docelową metrykę F1-Score, jest celowo odroczony i~wykonywany jednokrotnie, w~ramach finalnej analizy na zbiorze testowym.
+W celu zapewnienia szybkości i~spójności procesu treningu, podczas fazy walidacyjnej w~każdej epoce stosowany jest stały próg decyzyjny (0.5) dla predykcji onsetów. Bardziej zaawansowany proces wyszukiwania progu, który maksymalizuje docelową metrykę F1-Score, jest celowo odroczony i~wykonywany jednokrotnie, w~ramach finalnej analizy na zbiorze testowym.
 
 \section{Metodyka ewaluacji i generowanie wyników}
 \label{sec:metodyka_ewaluacji}
@@ -250,9 +250,9 @@ Ta metryka pozwala precyzyjnie zdiagnozować problemy z~rozpoznawaniem wysokośc
 
 Finalny etap pracy z~modelem obejmuje szczegółową analizę jego działania na niewidzianych wcześniej danych testowych oraz generowanie czytelnych dla człowieka wyników. W~tym celu, po zakończeniu całego procesu przeszukiwania hiperparametrów i~wyborze najlepszego modelu, uruchamiany jest dedykowany skrypt analityczny.
 
-Proces ten przebiega w~kilku krokach. Najpierw, najlepszy model jest uruchamiany na całym zbiorze testowym w~celu zebrania kompletnych predykcji. Następnie, system przeprowadza procedurę optymalizacyjną, aby znaleźć optymalny próg decyzyjny dla onsetów, który maksymalizuje uśrednioną metrykę TDR F1-Score na zbiorze testowym.
+Proces ten przebiega w~kilku krokach. Najpierw, najlepszy model jest uruchamiany na całym zbiorze testowym w~celu zebrania kompletnych predykcji. Następnie, system przeprowadza procedurę optymalizacyjną, aby znaleźć odpowiedni próg decyzyjny dla onsetów, który maksymalizuje uśrednioną metrykę TDR F1-Score na zbiorze testowym.
 
-Kluczowym elementem analizy jest ocena jakości transkrypcji dla każdego pliku z~osobna. Używając znalezionego optymalnego progu, system oblicza TDR F1-Score dla każdego utworu testowego, a~następnie tworzy ranking plików od tych z~najlepszym wynikiem do tych z~najgorszym. Na podstawie tego rankingu, generowane są pliki tabulatur w~formacie tekstowym dla kilku najlepszych i~kilku najgorszych przypadków. Takie podejście pozwala na, jakościową analizę błędów modelu, ułatwiając zrozumienie, w~jakich warunkach radzi on sobie najlepiej, a~gdzie popełnia najwięcej błędów.
+Kluczowym elementem analizy jest ocena jakości transkrypcji dla każdego pliku z~osobna. Używając znalezionego progu, system oblicza TDR F1-Score dla każdego utworu testowego, a~następnie tworzy ranking plików od tych z~najlepszym wynikiem do tych z~najgorszym. Na podstawie tego rankingu, generowane są pliki tabulatur w~formacie tekstowym dla kilku najlepszych i~kilku najgorszych przypadków. Takie podejście pozwala na, jakościową analizę błędów modelu, ułatwiając zrozumienie, w~jakich warunkach radzi on sobie najlepiej, a~gdzie popełnia najwięcej błędów.
 
 Dodatkowo, proces analizy wspierany jest przez zestaw narzędzi wizualizacyjnych. Umożliwiają one tworzenie różnorodnych wykresów, takich jak: spektrogramy wejściowe, grafy typu ,,piano roll'' dla etykiet i~predykcji onsetów, kolorowe mapy aktywności progów, a~także zbiorcze wizualizacje dla pojedynczych próbek. Narzędzia te są wykorzystywane zarówno do weryfikacji poprawności danych, jak i~do analizy wyników działania modelu.
 
