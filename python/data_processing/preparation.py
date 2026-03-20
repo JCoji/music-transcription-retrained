@@ -266,3 +266,136 @@ def preprocess_guitarset_data(
             print(f"    Pominięto (już istniały): {processing_stats[split_key_name]['skipped']}")
             print(f"    Błędy: {processing_stats[split_key_name]['errors']}")
     print(f"Przetworzone dane zostały zapisane w katalogu: {processed_output_base_dir}")
+
+
+# --- Isolated GuitarSet (Demucs) workflow ---
+
+_SPLIT_DIR_MAP = {"train": "train", "validation": "val"}
+
+
+def prepare_track_splits_from_isolated_dir(isolated_base_dir, output_dir_for_ids=None):
+    """Read track IDs directly from GuitarSetIsolated/{train,val}/ directories.
+
+    Returns a dict with keys 'train', 'validation', 'test' (test is always empty
+    since GuitarSetIsolated has no test split).  Also writes *_ids.txt files
+    compatible with the rest of the pipeline.
+    """
+    track_ids_map = {"train": [], "validation": [], "test": []}
+
+    for split_name, dir_name in _SPLIT_DIR_MAP.items():
+        split_dir = os.path.join(isolated_base_dir, dir_name)
+        if not os.path.isdir(split_dir):
+            print(f"Ostrzeżenie: katalog {split_dir} nie istnieje, pomijam split '{split_name}'.")
+            continue
+        ids = sorted(
+            os.path.splitext(f)[0]
+            for f in os.listdir(split_dir)
+            if f.endswith(".wav")
+        )
+        track_ids_map[split_name] = ids
+        print(f"  {split_name}: {len(ids)} utworów z {split_dir}")
+
+    if output_dir_for_ids:
+        os.makedirs(output_dir_for_ids, exist_ok=True)
+        for split_name, ids in track_ids_map.items():
+            txt_path = os.path.join(output_dir_for_ids, f"{split_name}_ids.txt")
+            with open(txt_path, "w") as f:
+                for track_id in ids:
+                    f.write(f"{track_id}\n")
+        print(f"Zapisano listy track_id w: {output_dir_for_ids}")
+
+    return track_ids_map
+
+
+def preprocess_isolated_guitarset_data(
+    isolated_base_dir,
+    processed_output_base_dir,
+    track_ids_map,
+    audio_sample_rate,
+    audio_hop_length,
+    audio_n_cqt_bins,
+    audio_cqt_bins_per_octave,
+    audio_cqt_fmin,
+):
+    """Preprocess Demucs-isolated audio from GuitarSetIsolated/ into .pt feature/label files.
+
+    Mirrors preprocess_guitarset_data() but reads audio and JAMS directly from
+    isolated_base_dir/{train,val}/ instead of via mirdata.
+    """
+    print(f"Preprocessing izolowanych danych z: {isolated_base_dir}")
+    print(f"Katalog wyjściowy: {processed_output_base_dir}")
+
+    processing_stats = {
+        split: {"processed": 0, "skipped": 0, "errors": 0}
+        for split in ["train", "validation", "test"]
+    }
+
+    for split_name, track_id_list in track_ids_map.items():
+        if not track_id_list:
+            print(f"\nBrak utworów w zbiorze: {split_name}")
+            continue
+
+        dir_name = _SPLIT_DIR_MAP.get(split_name, split_name)
+        source_dir = os.path.join(isolated_base_dir, dir_name)
+        output_split_dir = os.path.join(processed_output_base_dir, split_name)
+        os.makedirs(output_split_dir, exist_ok=True)
+
+        print(f"\nPrzetwarzanie: {split_name} ({len(track_id_list)} utworów) z {source_dir}")
+
+        for track_id in tqdm(track_id_list, desc=f"Processing {split_name}", unit="track"):
+            features_path = os.path.join(output_split_dir, f"{track_id}_features.pt")
+            labels_path = os.path.join(output_split_dir, f"{track_id}_labels.pt")
+
+            if os.path.exists(features_path) and os.path.exists(labels_path):
+                processing_stats[split_name]["skipped"] += 1
+                continue
+
+            audio_path = os.path.join(source_dir, f"{track_id}.wav")
+            jams_path = os.path.join(source_dir, f"{track_id}.jams")
+
+            if not os.path.exists(audio_path):
+                print(f"  Błąd: brak pliku audio {audio_path}")
+                processing_stats[split_name]["errors"] += 1
+                continue
+            if not os.path.exists(jams_path):
+                print(f"  Błąd: brak pliku JAMS {jams_path}")
+                processing_stats[split_name]["errors"] += 1
+                continue
+
+            try:
+                audio, _ = librosa.load(audio_path, sr=audio_sample_rate, mono=True)
+                cqt_spec = librosa.cqt(
+                    y=audio,
+                    sr=audio_sample_rate,
+                    hop_length=audio_hop_length,
+                    fmin=audio_cqt_fmin,
+                    n_bins=audio_n_cqt_bins,
+                    bins_per_octave=audio_cqt_bins_per_octave,
+                )
+                log_cqt = librosa.amplitude_to_db(np.abs(cqt_spec), ref=np.max)
+            except Exception as e:
+                print(f"  Błąd audio/CQT dla {track_id}: {e}")
+                processing_stats[split_name]["errors"] += 1
+                continue
+
+            try:
+                annotations = extract_annotations_from_jams(jams_path)
+            except Exception as e:
+                print(f"  Błąd JAMS dla {track_id}: {e}")
+                processing_stats[split_name]["errors"] += 1
+                continue
+
+            if not annotations:
+                print(f"  Błąd: brak adnotacji w {jams_path}")
+                processing_stats[split_name]["errors"] += 1
+                continue
+
+            torch.save(torch.tensor(log_cqt, dtype=torch.float32), features_path)
+            torch.save(torch.from_numpy(np.array(annotations, dtype=np.float32)), labels_path)
+            processing_stats[split_name]["processed"] += 1
+
+    print("\n--- Podsumowanie preprocessingu (isolated) ---")
+    for split_name in ["train", "validation", "test"]:
+        s = processing_stats[split_name]
+        print(f"  {split_name}: przetworzono={s['processed']}, pominięto={s['skipped']}, błędy={s['errors']}")
+    print(f"Dane zapisane w: {processed_output_base_dir}")

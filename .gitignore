@@ -21,6 +21,7 @@
 /python/.venv/
 /python/env/
 /python/ENV/
+/venv/
 
 # Ignoruj pliki cache Pythona
 /python/__pycache__/
@@ -58,3 +59,5 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+GuitarSetIsolated/

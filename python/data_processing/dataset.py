@@ -76,6 +76,7 @@ class GuitarSetTabDataset(Dataset):
         audio_cqt_fmin,
         label_transform_function=None,
         guitarset_data_home=None,
+        isolated_audio_dir=None,
         enable_audio_augmentations=True,
         aug_p_time_stretch=0.5,
         aug_time_stretch_limits=(0.85, 1.15),
@@ -102,23 +103,35 @@ class GuitarSetTabDataset(Dataset):
         self.audio_cqt_fmin = audio_cqt_fmin
         self.label_transform_function = label_transform_function
         self.guitarset_data_home = guitarset_data_home
+        self.isolated_audio_dir = isolated_audio_dir
         self.guitarset_loader_instance = None
         self.enable_audio_augmentations = (
             enable_audio_augmentations if self.data_split_name == "train" else False
         )
 
+        _isolated_split_dir_map = {"train": "train", "validation": "val"}
+
         if self.enable_audio_augmentations:
-            if self.guitarset_data_home is None:
-                raise ValueError(
-                    "`guitarset_data_home` musi być dostarczone dla 'train' split z włączonymi augmentacjami audio."
+            if self.isolated_audio_dir is not None:
+                # Use Demucs-isolated audio — no mirdata needed
+                _isolated_split_subdir = _isolated_split_dir_map.get(
+                    self.data_split_name, self.data_split_name
                 )
-            self.guitarset_loader_instance = mirdata.initialize(
-                "guitarset", data_home=self.guitarset_data_home
-            )
-            if not self.guitarset_loader_instance.track_ids:
-                raise RuntimeError(
-                    f"mirdata.GuitarSet nie znalazł żadnych utworów w guitarset_data_home='{self.guitarset_data_home}'."
+                self._isolated_audio_split_dir = os.path.join(
+                    self.isolated_audio_dir, _isolated_split_subdir
                 )
+            else:
+                if self.guitarset_data_home is None:
+                    raise ValueError(
+                        "`guitarset_data_home` lub `isolated_audio_dir` musi być dostarczone dla 'train' split z włączonymi augmentacjami audio."
+                    )
+                self.guitarset_loader_instance = mirdata.initialize(
+                    "guitarset", data_home=self.guitarset_data_home
+                )
+                if not self.guitarset_loader_instance.track_ids:
+                    raise RuntimeError(
+                        f"mirdata.GuitarSet nie znalazł żadnych utworów w guitarset_data_home='{self.guitarset_data_home}'."
+                    )
 
         self.feature_sources = []
         self.label_file_paths = []
@@ -147,37 +160,53 @@ class GuitarSetTabDataset(Dataset):
                 if not os.path.exists(label_file_path):
                     continue
                 if self.enable_audio_augmentations:
-                    if self.guitarset_loader_instance is None:
-                        continue
-                    try:
-                        track_metadata = self.guitarset_loader_instance.track(
-                            full_track_id_from_file
+                    if self.isolated_audio_dir is not None:
+                        # Isolated workflow: derive path from local directory
+                        audio_source_path = os.path.join(
+                            self._isolated_audio_split_dir,
+                            f"{base_track_id_for_filename}.wav",
                         )
-                        audio_source_path = None
-                        if (
-                            hasattr(track_metadata, "audio_mix_path")
-                            and track_metadata.audio_mix_path
-                            and os.path.exists(track_metadata.audio_mix_path)
-                        ):
-                            audio_source_path = track_metadata.audio_mix_path
-                        elif (
-                            hasattr(track_metadata, "audio_mic_path")
-                            and track_metadata.audio_mic_path
-                            and os.path.exists(track_metadata.audio_mic_path)
-                        ):
-                            audio_source_path = track_metadata.audio_mic_path
-
-                        if audio_source_path:
+                        if os.path.exists(audio_source_path):
                             self.feature_sources.append(audio_source_path)
                             self.label_file_paths.append(label_file_path)
                             self.base_track_ids.append(base_track_id_for_filename)
                             self.full_track_ids.append(full_track_id_from_file)
-                    except mirdata.core.errors.TrackIdError:
-                        pass
-                    except Exception as e:
-                        print(
-                            f"Błąd przy pobieraniu ścieżki audio dla {full_track_id_from_file}: {e}"
-                        )
+                        else:
+                            print(
+                                f"Ostrzeżenie: brak pliku audio {audio_source_path}, pomijam."
+                            )
+                    else:
+                        if self.guitarset_loader_instance is None:
+                            continue
+                        try:
+                            track_metadata = self.guitarset_loader_instance.track(
+                                full_track_id_from_file
+                            )
+                            audio_source_path = None
+                            if (
+                                hasattr(track_metadata, "audio_mix_path")
+                                and track_metadata.audio_mix_path
+                                and os.path.exists(track_metadata.audio_mix_path)
+                            ):
+                                audio_source_path = track_metadata.audio_mix_path
+                            elif (
+                                hasattr(track_metadata, "audio_mic_path")
+                                and track_metadata.audio_mic_path
+                                and os.path.exists(track_metadata.audio_mic_path)
+                            ):
+                                audio_source_path = track_metadata.audio_mic_path
+
+                            if audio_source_path:
+                                self.feature_sources.append(audio_source_path)
+                                self.label_file_paths.append(label_file_path)
+                                self.base_track_ids.append(base_track_id_for_filename)
+                                self.full_track_ids.append(full_track_id_from_file)
+                        except mirdata.core.errors.TrackIdError:
+                            pass
+                        except Exception as e:
+                            print(
+                                f"Błąd przy pobieraniu ścieżki audio dla {full_track_id_from_file}: {e}"
+                            )
                 else:
                     feature_file_path = os.path.join(
                         self.current_split_data_dir,

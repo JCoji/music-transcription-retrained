@@ -5,6 +5,7 @@ import librosa
 BASE_PROJECT_DIR = os.getcwd()
 DATA_HOME_DEFAULT = os.path.join(BASE_PROJECT_DIR, "_mir_datasets_storage")
 OUTPUT_BASE_DIR_DEFAULT = os.path.join(BASE_PROJECT_DIR, "_processed_guitarset_data")
+GUITARSET_ISOLATED_DIR = os.path.join(BASE_PROJECT_DIR, "GuitarSetIsolated")
 DEFAULT_HYPERPARAMETER_FILE = "hyperparam_set_v1.json"
 
 # --- Parametry Przetwarzania Audio ---
